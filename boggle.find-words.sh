@@ -109,12 +109,17 @@ logDebug "pattern: '${pattern}'"
 
 # Run basic pattern agains word list save results to a tmp file
 tmpFile="$(mktemp -p tmp/ filtered-words.XXX.txt)"
+logInfo "Saving filtered words to file '${tmpFile}'"
 egrep --color=never "${pattern}" "${WORDS}" > "${tmpFile}"
-numHits=$(wc -l "${tmpFile}")
+
+function logFilteredHitCount() {
+  numHits=$(wc -l "${tmpFile}" | awk '{print $1}')
+  logDebug "Number of hits found using the basic pattern: '${numHits}' (${tmpFile})"
+}
+logFilteredHitCount
 numTrimmedHits=5
 prefixHits="$(head -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
 suffixHits="$(tail -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
-logDebug "Number of hits found using the basic pattern: ${numHits}"
 logDebug "\n${prefixHits}\n  ...\n${suffixHits}"
 
 echo
