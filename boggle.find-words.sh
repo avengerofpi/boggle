@@ -122,5 +122,59 @@ prefixHits="$(head -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
 suffixHits="$(tail -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
 logDebug "\n${prefixHits}\n  ...\n${suffixHits}"
 
+# Add a pattern to filter out hits with too many of any char (or multi-char)
+
+# First, get counts of each clue. Be careful to not trim too much, e.g. if
+# there's a multi-char clue 'in' that occurs once as well as single-char clues
+# 'i' and 'n', then it may be possible (depending on the actual grid) for 'in'
+# to occur more than once.
+declare -A clueCnts
+for c in {a..z}; do
+  clueCnts["${c}"]="0";
+done
+# In order to udpate the array clueCnts from within the while loop, use process
+# substitution instead of a pipeline
+# https://stackoverflow.com/questions/9985076/bash-populate-an-array-in-loop
+#   "Every command in a pipeline receives a copy of the shell's execution
+#     environment, so a while loop would populate a copy of the array, and when
+#     the while loop completes, that copy disappears"
+while read cnt clue; do
+  logDebug "Found clue '${clue}' (cnt: '${cnt}')"
+  clueCnts["${clue}"]="${cnt}"
+done < <(sed -e 's@\(\<[a-z]\)@\n\1@g' -e 's@ @\n@g' "${GRID}" | grep '[a-z]' | sort | uniq -c)
+
+logDebug "clues:  '${!clueCnts[@]}'"
+logDebug "counts: '${clueCnts[@]}'"
+
+# Now process each clue.
+for clue in "${!clueCnts[@]}"; do
+  logDebug "Checking for too many hits against clue '${clue}' (cnt: 'checking...')"
+  clueCnt="${clueCnts[${clue}]}"
+  logDebug "Checking for too many hits against clue '${clue}' (cnt: '${clueCnt}')"
+  # If clue is multi-char, check the individual chars cnts in case they all occur individually
+  # Note that if I were to properly handle multi-char clues, I'd need to check all sub-stings.
+  declare -i clueLen="${#clue}"
+  declare -i maxExtraHits=0
+  if [ "${clueLen}" -gt 1 ]; then
+    logDebug "  This is a multi-char clue, it has '${clueLen}' chars"
+    for i in $(seq 0 $((clueLen - 1))); do
+      c="${clue:${i}:1}"
+      declare -i cCnt="${clueCnts[${c}]}"
+      logDebug "  Inspecting embedded char '${c}' (cnt: '${cCnt}')"
+      if [ ${cCnt} -lt ${maxExtraHits} -o ${maxExtraHits} -eq 0 ]; then
+        maxExtraHits=${cCnt}
+        logDebug "    Updating maxExtraHits to '${maxExtraHits}'"
+      fi
+    done
+  fi
+  declare -i maxHits=${clueCnt}+${maxExtraHits}
+  declare -i excessiveHits=${maxHits}+1
+  logDebug "  maxHits: '${maxHits}'"
+  checkPattern="^\(.*${clue}\)\{${excessiveHits},\}"
+  logDebug "checkPattern: '${checkPattern}'"
+  sed -i -e "/${checkPattern}/d" "${tmpFile}"
+  logFilteredHitCount
+done
+
 echo
 logInfo "Done"
