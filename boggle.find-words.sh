@@ -98,3 +98,20 @@ if [ ${exitCode} -gt 0 ]; then
 else
   echo "PASS !!!!"
 fi
+
+# Construct basic regex pattern from grid file
+multiLetterClues=$(sed -e 's@\<[a-z]\>@@g' -e 's@ @\n@g' "${GRID}" | sort | xargs | sed -e 's@ @|@g')
+logDebug "multiLetterClues: '${multiLetterClues}' (should only be one)"
+singleLetterClues=$(sed -e 's@\<[a-z]\{2,\}\>@@g' -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @@g')
+logDebug "singleLetterClues: '${singleLetterClues}'"
+pattern="^([${singleLetterClues}]|${multiLetterClues})+\$"
+logDebug "pattern: '${pattern}'"
+
+# Run basic pattern agains word list
+hits="$(egrep --color=never "${pattern}" "${WORDS}")"
+numHits="$(echo "${hits}" | wc -l)"
+numTrimmedHits=5
+prefixHits="$(echo "${hits}" | head -${numTrimmedHits} | sed -e 's@^@  @')"
+suffixHits="$(echo "${hits}" | tail -${numTrimmedHits} | sed -e 's@^@  @')"
+logDebug "Number of hits found using the basic pattern: ${numHits}"
+logDebug "\n${prefixHits}\n  ...\n${suffixHits}"
