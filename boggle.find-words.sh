@@ -109,7 +109,9 @@ pattern="^([${singleLetterClues}]|${multiLetterClues})+\$"
 logDebug "pattern: '${pattern}'"
 
 # Run basic pattern agains word list save results to a tmp file
-tmpFile="$(mktemp -p tmp/ filtered-words.XXX.txt)"
+gridBasename="$(basename "${GRID}")"
+wordsBasename="$(basename "${WORDS}")"
+tmpFile="tmp/${wordsBasename}---${gridBasename}---filtered---$(date +"%F-%Hh%Mm%Ss").txt"
 logInfo "Saving filtered words to file '${tmpFile}'"
 egrep --color=never "${pattern}" "${WORDS}" > "${tmpFile}"
 
