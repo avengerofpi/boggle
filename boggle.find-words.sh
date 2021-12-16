@@ -4,7 +4,7 @@
 set -eu
 
 # Declare some files for later selection
-GRID_01="/home/cory/git/boggle/data/grids/sample-boggle-grid.01.txt2"
+GRID_01="/home/cory/git/boggle/data/grids/sample-boggle-grid.01.txt"
 GRID_03="/home/cory/git/boggle/data/grids/sample-boggle-grid.03.txt"
 GRID_02="/home/cory/git/boggle/data/grids/sample-boggle-grid.02.txt"
 
