@@ -55,15 +55,15 @@ function logCritical() { if $critical;  then echo -e "${CRITICAL_COLOR}CRITICAL:
 function logHeader()   {                     echo -e "${HEADER_COLOR}"            "${@}${TPUT_RESET}"; }
 
 # Declare some files for later selection
-GRID_01="/home/cory/git/boggle/data/grids/sample-boggle-grid.01.txt"
-GRID_03="/home/cory/git/boggle/data/grids/sample-boggle-grid.03.txt"
-GRID_02="/home/cory/git/boggle/data/grids/sample-boggle-grid.02.txt"
+GRID_01="${PWD}/data/grids/sample-boggle-grid.01.txt"
+GRID_03="${PWD}/data/grids/sample-boggle-grid.03.txt"
+GRID_02="${PWD}/data/grids/sample-boggle-grid.02.txt"
 
-AMERICAN_ENGLISH_WORDS="/home/cory/git/boggle/data/words/american-english.words"
-SCRABBLE_BOGGLE_WORDS="/home/cory/git/boggle/data/words/scrabble.boggle.words"
-SCRABBLE_ALL_WORDS="/home/cory/git/boggle/data/words/scrabble.all.words"
+AMERICAN_ENGLISH_WORDS="${PWD}/data/words/american-english.words"
+SCRABBLE_BOGGLE_WORDS="${PWD}/data/words/scrabble.boggle.words"
+SCRABBLE_ALL_WORDS="${PWD}/data/words/scrabble.all.words"
 
-BOGGLE_DICE_TXT="/home/cory/git/boggle/data/dice/boggle-dice.txt"
+BOGGLE_DICE_TXT="${PWD}/data/dice/boggle-dice.txt"
 
 # Exit codes (to be OR'd together ('|'))
 declare -i FILE_MISSING=1
