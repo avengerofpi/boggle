@@ -71,6 +71,8 @@ declare -i FILE_UNREADABLE=2
 # Select specific files to use this run
 GRID="${GRID_01}"
 WORDS="${AMERICAN_ENGLISH_WORDS}"
+logInfo "Selected grid  file '${GRID}'"
+logInfo "Selected words file '${WORDS}'"
 
 # Verify chosen files exist
 declare -i exitCode=0
@@ -114,3 +116,6 @@ prefixHits="$(head -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
 suffixHits="$(tail -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
 logDebug "Number of hits found using the basic pattern: ${numHits}"
 logDebug "\n${prefixHits}\n  ...\n${suffixHits}"
+
+echo
+logInfo "Done"
