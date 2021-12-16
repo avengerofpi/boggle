@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# File on errors. Undefined vars count as errors.
+# Exit on errors. Undefined vars count as errors.
 set -eu
 
 # Logging levels
@@ -65,15 +65,15 @@ SCRABBLE_ALL_WORDS="${PWD}/data/words/scrabble.all.words"
 
 BOGGLE_DICE_TXT="${PWD}/data/dice/boggle-dice.txt"
 
-# Exit codes (to be OR'd together ('|'))
-declare -i FILE_MISSING=1
-declare -i FILE_UNREADABLE=2
-
 # Select specific files to use this run
 GRID="${GRID_01}"
 WORDS="${AMERICAN_ENGLISH_WORDS}"
 logInfo "Selected grid  file '${GRID}'"
 logInfo "Selected words file '${WORDS}'"
+
+# Exit codes (to be OR'd together ('|'))
+declare -i FILE_MISSING=1
+declare -i FILE_UNREADABLE=2
 
 # Verify chosen files exist
 declare -i exitCode=0
