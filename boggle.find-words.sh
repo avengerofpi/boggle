@@ -105,11 +105,12 @@ logDebug "singleLetterClues: '${singleLetterClues}'"
 pattern="^([${singleLetterClues}]|${multiLetterClues})+\$"
 logDebug "pattern: '${pattern}'"
 
-# Run basic pattern agains word list
-hits="$(egrep --color=never "${pattern}" "${WORDS}")"
-numHits="$(echo "${hits}" | wc -l)"
+# Run basic pattern agains word list save results to a tmp file
+tmpFile="$(mktemp -p tmp/ filtered-words.XXX.txt)"
+egrep --color=never "${pattern}" "${WORDS}" > "${tmpFile}"
+numHits=$(wc -l "${tmpFile}")
 numTrimmedHits=5
-prefixHits="$(echo "${hits}" | head -${numTrimmedHits} | sed -e 's@^@  @')"
-suffixHits="$(echo "${hits}" | tail -${numTrimmedHits} | sed -e 's@^@  @')"
+prefixHits="$(head -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
+suffixHits="$(tail -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
 logDebug "Number of hits found using the basic pattern: ${numHits}"
 logDebug "\n${prefixHits}\n  ...\n${suffixHits}"
