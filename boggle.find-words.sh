@@ -91,12 +91,11 @@ elif [ ! -r "${WORDS}" ]; then
   exitCode=$((exitCode | FILE_UNREADABLE))
 fi
 
+# Exit if one of the above checks failed
 if [ ${exitCode} -gt 0 ]; then
   logError
   logError "An error was encountered. Exiting early with exit code ${exitCode}"
   exit ${exitCode}
-else
-  echo "PASS !!!!"
 fi
 
 # Construct basic regex pattern from grid file
