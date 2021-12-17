@@ -111,18 +111,19 @@ logDebug "pattern: '${pattern}'"
 # Run basic pattern agains word list save results to a tmp file
 gridBasename="$(basename "${GRID}")"
 wordsBasename="$(basename "${WORDS}")"
-tmpFile="tmp/${wordsBasename}---${gridBasename}---filtered---$(date +"%F-%Hh%Mm%Ss").txt"
-logInfo "Saving filtered words to file '${tmpFile}'"
-egrep --color=never "${pattern}" "${WORDS}" > "${tmpFile}"
+datetime="$(date +"%F-%Hh%Mm%Ss")"
+filteredWordsFile="tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered.txt"
+logInfo "Saving filtered words to file '${filteredWordsFile}'"
+egrep --color=never "${pattern}" "${WORDS}" > "${filteredWordsFile}"
 
 function logFilteredHitCount() {
-  numHits=$(wc -l "${tmpFile}" | awk '{print $1}')
-  logDebug "Number of hits found using the basic pattern: '${numHits}' (${tmpFile})"
+  numHits=$(wc -l "${filteredWordsFile}" | awk '{print $1}')
+  logInfo "Number of filtered hits found: '${numHits}' (${filteredWordsFile})"
 }
 logFilteredHitCount
 numTrimmedHits=5
-prefixHits="$(head -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
-suffixHits="$(tail -${numTrimmedHits} "${tmpFile}" | sed -e 's@^@  @')"
+prefixHits="$(head -${numTrimmedHits} "${filteredWordsFile}" | sed -e 's@^@  @')"
+suffixHits="$(tail -${numTrimmedHits} "${filteredWordsFile}" | sed -e 's@^@  @')"
 logDebug "\n${prefixHits}\n  ...\n${suffixHits}"
 
 # Add a pattern to filter out hits with too many of any char (or multi-char)
@@ -175,7 +176,7 @@ for clue in "${!clueCnts[@]}"; do
   logDebug "  maxHits: '${maxHits}'"
   checkPattern="^\(.*${clue}\)\{${excessiveHits},\}"
   logDebug "checkPattern: '${checkPattern}'"
-  sed -i -e "/${checkPattern}/d" "${tmpFile}"
+  sed -i -e "/${checkPattern}/d" "${filteredWordsFile}"
   logFilteredHitCount
 done
 
