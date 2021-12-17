@@ -179,5 +179,86 @@ for clue in "${!clueCnts[@]}"; do
   logFilteredHitCount
 done
 
+# Now process pairs of adjacent clues.
+
+# First, read the grid into an associative array with keys/value pairs of the form
+#   ij=CLUE_VALUE
+# denotiving value CLUE_VALUE at row i, column j, 1 <= i,j <= 5
+# The structure of the grid file should already have been verified elsewhere.
+declare -i i=1;
+declare -A gridMap
+logDebug "Setting up 'gridMap' associative array:"
+while read i1 i2 i3 i4 i5; do
+  gridMap["${i}1"]="${i1}"
+  gridMap["${i}2"]="${i2}"
+  gridMap["${i}3"]="${i3}"
+  gridMap["${i}4"]="${i4}"
+  gridMap["${i}5"]="${i5}"
+  logDebug "${i}1=${gridMap[${i}1]} ${i}2=${gridMap[${i}2]} ${i}3=${gridMap[${i}3]} ${i}4=${gridMap[${i}4]} ${i}5=${gridMap[${i}5]}"
+  i+=1
+done < <(cat "${GRID}")
+logDebug "Grid file contains (reminder/for comparison):"
+logDebug "\n$(cat "${GRID}")"
+
+# Start building the possible regexes from pairs of clues
+declare -i i j
+regexFile="tmp/${datetime}---${gridBasename}---regex-list.txt"
+touch "${regexFile}"
+logInfo "Creating regex file '${regexFile}'"
+logInfo "  For now it will just contain patterns composed from pairs of adjacent clues"
+# Horizontal pairs
+for i in {1..5}; do
+  for j in {1..4}; do
+    a="${gridMap["$((i+0))$((j+0))"]}"
+    b="${gridMap["$((i+0))$((j+1))"]}"
+    # TODO: Avoid duplicates
+    echo "${a}${b}" >> "${regexFile}"
+    echo "${b}${a}" >> "${regexFile}"
+  done
+done
+# Vertical pairs
+for i in {1..4}; do
+  for j in {1..5}; do
+    a="${gridMap["$((i+0))$((j+0))"]}"
+    b="${gridMap["$((i+1))$((j+0))"]}"
+    # TODO: Avoid duplicates
+    echo "${a}${b}" >> "${regexFile}"
+    echo "${b}${a}" >> "${regexFile}"
+  done
+done
+# Forward diagonal pairs
+for i in {1..4}; do
+  for j in {1..4}; do
+    a="${gridMap["$((i+0))$((j+1))"]}"
+    b="${gridMap["$((i+1))$((j+0))"]}"
+    # TODO: Avoid duplicates
+    echo "${a}${b}" >> "${regexFile}"
+    echo "${b}${a}" >> "${regexFile}"
+  done
+done
+# Backward diagonal pairs
+for i in {1..4}; do
+  for j in {1..4}; do
+    a="${gridMap["$((i+1))$((j+0))"]}"
+    b="${gridMap["$((i+0))$((j+1))"]}"
+    # TODO: Avoid duplicates
+    echo "${a}${b}" >> "${regexFile}"
+    echo "${b}${a}" >> "${regexFile}"
+  done
+done
+
+# Construct regex
+pattern2="^($(sort "${regexFile}" | xargs | sed -e 's@ @|@g'))+\$"
+
+logDebug "Regex file composed from pairs of adjacent clues:"
+logDebug "\n$(cat ${regexFile})"
+logDebug " Pattern: '${pattern2}'"
+
+# Apply the new filter pattern
+filteredWordsFile2="tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
+egrep "${pattern2}" "${filteredWordsFile}" > "${filteredWordsFile2}"
+mv "${filteredWordsFile2}" "${filteredWordsFile}"
+logFilteredHitCount
+
 echo
 logInfo "Done"
