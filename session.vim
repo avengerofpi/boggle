@@ -37,6 +37,7 @@ set nomodeline
 set mouse=a
 set printoptions=paper:letter
 set ruler
+set scrollopt=ver,jump,hor
 set shiftwidth=2
 set showcmd
 set showmatch
@@ -77,12 +78,12 @@ set winheight=1
 set winminwidth=0
 set winwidth=1
 exe '1resize ' . ((&lines * 13 + 22) / 44)
-exe 'vert 1resize ' . ((&columns * 20 + 97) / 195)
+exe 'vert 1resize ' . ((&columns * 18 + 97) / 195)
 exe '2resize ' . ((&lines * 14 + 22) / 44)
-exe 'vert 2resize ' . ((&columns * 20 + 97) / 195)
+exe 'vert 2resize ' . ((&columns * 18 + 97) / 195)
 exe '3resize ' . ((&lines * 13 + 22) / 44)
-exe 'vert 3resize ' . ((&columns * 20 + 97) / 195)
-exe 'vert 4resize ' . ((&columns * 174 + 97) / 195)
+exe 'vert 3resize ' . ((&columns * 18 + 97) / 195)
+exe 'vert 4resize ' . ((&columns * 176 + 97) / 195)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -211,7 +212,7 @@ if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 5
-normal! 09|
+normal! 0
 wincmd w
 argglobal
 if bufexists("data/grids/sample-boggle-grid.02.txt") | buffer data/grids/sample-boggle-grid.02.txt | else | edit data/grids/sample-boggle-grid.02.txt | endif
@@ -612,32 +613,55 @@ silent! normal! zE
 13,48fold
 49,56fold
 57,67fold
-68,71fold
-72,75fold
-76,100fold
-101,108fold
-109,117fold
-6
-normal! zo
+68,73fold
+74,79fold
+80,117fold
+118,125fold
+126,132fold
+126,143fold
+144,196fold
+199,217fold
+224,233fold
+234,243fold
+244,253fold
+254,263fold
+218,264fold
+265,271fold
+272,277fold
+197,277fold
 13
 normal! zo
 13
 normal! zc
-let s:l = 109 - ((60 * winheight(0) + 21) / 42)
+126
+normal! zo
+126
+normal! zo
+126
+normal! zc
+197
+normal! zo
+218
+normal! zo
+218
+normal! zc
+197
+normal! zc
+let s:l = 197 - ((79 * winheight(0) + 21) / 42)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-109
+197
 normal! 0
 wincmd w
 4wincmd w
 exe '1resize ' . ((&lines * 13 + 22) / 44)
-exe 'vert 1resize ' . ((&columns * 20 + 97) / 195)
+exe 'vert 1resize ' . ((&columns * 18 + 97) / 195)
 exe '2resize ' . ((&lines * 14 + 22) / 44)
-exe 'vert 2resize ' . ((&columns * 20 + 97) / 195)
+exe 'vert 2resize ' . ((&columns * 18 + 97) / 195)
 exe '3resize ' . ((&lines * 13 + 22) / 44)
-exe 'vert 3resize ' . ((&columns * 20 + 97) / 195)
-exe 'vert 4resize ' . ((&columns * 174 + 97) / 195)
+exe 'vert 3resize ' . ((&columns * 18 + 97) / 195)
+exe 'vert 4resize ' . ((&columns * 176 + 97) / 195)
 tabnext 1
 badd +0 boggle.find-words.sh
 badd +5 data/grids/sample-boggle-grid.01.txt
@@ -645,6 +669,11 @@ badd +0 data/grids/sample-boggle-grid.02.txt
 badd +0 data/grids/sample-boggle-grid.03.txt
 badd +639 session.vim
 badd +70 ~/git/sudoku/sudoku.sh
+badd +1 tmp/filtered-words.10c.txt
+badd +2 tmp/filtered-words.X3d.txt
+badd +4721 tmp/sample-boggle-grid.01.txt.filtered-words.BNT.txt
+badd +14 tmp/2021-12-17-17h03m35s---sample-boggle-grid.01.txt---american-english.words---filtered2.txt
+badd +215 tmp/2021-12-17-17h03m35s---sample-boggle-grid.01.txt---american-english.words---filtered.txt
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0
   silent exe 'bwipe ' . s:wipebuf
 endif
