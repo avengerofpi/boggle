@@ -73,6 +73,17 @@ logInfo "Selected words file '${WORDS}'"
 # Exit codes (to be OR'd together ('|'))
 declare -i FILE_MISSING=1
 declare -i FILE_UNREADABLE=2
+declare -i INVALID_GRID_FILE=4
+declare -i GREP_ERROR=8
+
+# Exit if one of the above checks failed
+function checkExitCode() {
+  if [ ${exitCode} -gt 0 ]; then
+    logError
+    logError "An error was encountered. Exiting early with exit code ${exitCode}"
+    exit ${exitCode}
+  fi
+}
 
 # Verify chosen files exist
 declare -i exitCode=0
@@ -91,13 +102,34 @@ elif [ ! -r "${WORDS}" ]; then
   logError "ERROR: Boggle words file '${WORDS}' exists but it cannot be read"
   exitCode=$((exitCode | FILE_UNREADABLE))
 fi
+checkExitCode
 
-# Exit if one of the above checks failed
-if [ ${exitCode} -gt 0 ]; then
-  logError
-  logError "An error was encountered. Exiting early with exit code ${exitCode}"
-  exit ${exitCode}
+# Validate number of lines
+declare -i EXPECTED_NUM_LINES=5
+declare -i numLines=$(wc "${GRID}" | awk '{print $1}')
+if [ ${numLines} -ne ${EXPECTED_NUM_LINES} ]; then
+  logError "Incorrect number of lines found in grid file."
+  logError "  Found '${numLines}' lines but should have found '${EXPECTED_NUM_LINES}' lines"
+  exitCode=$((exitCode | INVALID_GRID_FILE))
 fi
+
+# Verify each line looks correct (eactly 5 non-empty alphabetical clues)
+gridLinePattern="^[a-z]+( [a-z]+){4}+\$"
+# Avoid error
+set +e
+gridAntiMatch="$(egrep -nv "${gridLinePattern}" "${GRID}")"
+if [ $? -eq 2 ]; then
+  logError "There was an error with the grep command just run"
+  exitCode=$((exitCode | GREP_ERROR))
+fi
+set -e
+if [ -n "${gridAntiMatch}" ]; then
+  logError "One or more lines of the grid file looks incorrect."
+  logError "  All lines should match the regex '${gridLinePattern}' but we found the following lines:"
+  logError "\n$(echo "${gridAntiMatch}")"
+  exitCode=$((exitCode | INVALID_GRID_FILE))
+fi
+checkExitCode
 
 # Construct basic regex pattern from grid file
 multiLetterClues=$(sed -e 's@\<[a-z]\>@@g' -e 's@ @\n@g' "${GRID}" | sort | xargs | sed -e 's@ @|@g')
