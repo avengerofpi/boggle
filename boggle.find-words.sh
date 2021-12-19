@@ -197,7 +197,6 @@ logDebug "counts: '${clueCnts[@]}'"
 
 # Now process each clue.
 for clue in "${!clueCnts[@]}"; do
-  logDebug "Checking for too many hits against clue '${clue}' (cnt: 'checking...')"
   clueCnt="${clueCnts[${clue}]}"
   logDebug "Checking for too many hits against clue '${clue}' (cnt: '${clueCnt}')"
   # If clue is multi-char, check the individual chars cnts in case they all occur individually
@@ -222,8 +221,9 @@ for clue in "${!clueCnts[@]}"; do
   checkPattern="^\(.*${clue}\)\{${excessiveHits},\}"
   logDebug "checkPattern: '${checkPattern}'"
   sed -i -e "/${checkPattern}/d" "${filteredWordsFile}"
-  logFilteredHitCount
 done
+logInfo "Second pass filter ensuring no char/clue occurs too many times"
+logFilteredHitCount
 
 # Now process pairs of adjacent clues.
 
@@ -314,7 +314,7 @@ pattern2="^${doubleCluePattern_all}{2}|${fourCharWords_withDoubleCharClue_patter
 #     Not going to bother with this for now
 logDebug "Regex file composed from pairs of adjacent clues:"
 logDebug "\n$(cat ${regexFile})"
-logDebug " Pattern: '${pattern2}'"
+logInfo  "Third pass filtering applying pattern '${pattern2}' to words list file"
 
 # Apply the new filter pattern
 filteredWordsFile2="tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
@@ -331,3 +331,6 @@ logFilteredHitCount
 
 echo
 logInfo "Done"
+logInfo "Final results available in file"
+logInfo "  ${filteredWordsFile}"
+logFilteredHitCount
