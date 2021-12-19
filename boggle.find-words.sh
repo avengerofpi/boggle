@@ -142,6 +142,11 @@ singleCluePattern="(${singleCluePattern_1char}|${singleCluePattern_2char})"
 pattern1="^${singleCluePattern}+\$"
 logDebug "pattern1: '${pattern1}'"
 
+function logFilteredHitCount() {
+  numHits=$(wc -l "${filteredWordsFile}" | awk '{print $1}')
+  logInfo "Number of filtered hits found: '${numHits}'"
+}
+
 # Run basic pattern agains word list save results to a tmp file
 gridBasename="$(basename "${GRID}")"
 wordsBasename="$(basename "${WORDS}")"
@@ -159,11 +164,6 @@ fi
 checkExitCode
 set -e
 logInfo "First pass filtering applying pattern '${pattern1}' to words list file"
-
-function logFilteredHitCount() {
-  numHits=$(wc -l "${filteredWordsFile}" | awk '{print $1}')
-  logInfo "Number of filtered hits found: '${numHits}' (${filteredWordsFile})"
-}
 logFilteredHitCount
 numTrimmedHits=5
 prefixHits="$(head -${numTrimmedHits} "${filteredWordsFile}" | sed -e 's@^@  @')"
