@@ -116,7 +116,7 @@ fi
 
 # Verify each line looks correct (eactly 5 non-empty alphabetical clues)
 gridLinePattern="^[a-z]+( [a-z]+){4}+\$"
-# Avoid error
+# Avoid grep error
 set +e
 gridAntiMatch="$(egrep -nv "${gridLinePattern}" "${GRID}")"
 if [ $? -eq 2 ]; then
@@ -150,7 +150,15 @@ datetime="$(date +"%F-%Hh%Mm%Ss")"
 filteredWordsFile="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered.txt"
 logInfo "Saving filtered words to file"
 logInfo "  ${filteredWordsFile}"
+# Avoid grep error
+set +e
 egrep --color=never "${pattern1}" "${WORDS}" > "${filteredWordsFile}"
+if [ $? -eq 2 ]; then
+  logError "There was an error with the grep command just run"
+  exitCode=$((exitCode | GREP_ERROR))
+fi
+checkExitCode
+set -e
 logInfo "First pass filtering applying pattern '${pattern1}' to words list file"
 
 function logFilteredHitCount() {
@@ -310,7 +318,14 @@ logDebug " Pattern: '${pattern2}'"
 
 # Apply the new filter pattern
 filteredWordsFile2="tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
+set +e
 egrep "${pattern2}" "${filteredWordsFile}" > "${filteredWordsFile2}"
+if [ $? -eq 2 ]; then
+  logError "There was an error with the grep command just run"
+  exitCode=$((exitCode | GREP_ERROR))
+fi
+checkExitCode
+set -e
 mv "${filteredWordsFile2}" "${filteredWordsFile}"
 logFilteredHitCount
 
