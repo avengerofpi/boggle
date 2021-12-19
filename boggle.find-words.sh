@@ -248,7 +248,7 @@ logDebug "\n$(cat "${GRID}")"
 
 # Start building the possible regexes from pairs of clues
 declare -i i j
-regexFile="tmp/${datetime}---${gridBasename}---regex-list.txt"
+regexFile="${PWD}/tmp/${datetime}---${gridBasename}---regex-list.txt"
 touch "${regexFile}"
 logInfo "Creating regex file '${regexFile}'"
 logInfo "  For now it will just contain patterns composed from pairs of adjacent clues"
@@ -317,7 +317,7 @@ logDebug "\n$(cat ${regexFile})"
 logInfo  "Third pass filtering applying pattern '${pattern2}' to words list file"
 
 # Apply the new filter pattern
-filteredWordsFile2="tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
+filteredWordsFile2="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
 set +e
 egrep "${pattern2}" "${filteredWordsFile}" > "${filteredWordsFile2}"
 if [ $? -eq 2 ]; then
