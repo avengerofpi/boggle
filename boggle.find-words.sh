@@ -136,16 +136,21 @@ multiLetterClues=$(sed -e 's@\<[a-z]\>@@g' -e 's@ @\n@g' "${GRID}" | sort | xarg
 logDebug "multiLetterClues: '${multiLetterClues}' (should only be one)"
 singleLetterClues=$(sed -e 's@\<[a-z]\{2,\}\>@@g' -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @@g')
 logDebug "singleLetterClues: '${singleLetterClues}'"
-pattern="^([${singleLetterClues}]|${multiLetterClues})+\$"
-logDebug "pattern: '${pattern}'"
+singleCluePattern_1char="([${singleLetterClues}])"
+singleCluePattern_2char="(${multiLetterClues})"
+singleCluePattern="(${singleCluePattern_1char}|${singleCluePattern_2char})"
+pattern1="^${singleCluePattern}+\$"
+logDebug "pattern1: '${pattern1}'"
 
 # Run basic pattern agains word list save results to a tmp file
 gridBasename="$(basename "${GRID}")"
 wordsBasename="$(basename "${WORDS}")"
 datetime="$(date +"%F-%Hh%Mm%Ss")"
-filteredWordsFile="tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered.txt"
-logInfo "Saving filtered words to file '${filteredWordsFile}'"
-egrep --color=never "${pattern}" "${WORDS}" > "${filteredWordsFile}"
+filteredWordsFile="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered.txt"
+logInfo "Saving filtered words to file"
+logInfo "  ${filteredWordsFile}"
+egrep --color=never "${pattern1}" "${WORDS}" > "${filteredWordsFile}"
+logInfo "First pass filtering applying pattern '${pattern1}' to words list file"
 
 function logFilteredHitCount() {
   numHits=$(wc -l "${filteredWordsFile}" | awk '{print $1}')
@@ -280,8 +285,24 @@ for i in {1..4}; do
 done
 
 # Construct regex
-pattern2="^($(sort "${regexFile}" | xargs | sed -e 's@ @|@g'))+\$"
+# Only handles single-char and double-char clues correctly and only when exactly one double-char clue
+# occurs (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
+# generalize to clue lengths > 2 chars or to multiple double-char clues, this logic will need changing.
+doubleCluePattern_all="($(sort "${regexFile}" |  xargs | sed -e 's@ @|@g'))"
+doubleCluePattern_2char="($(sort "${regexFile}" | egrep '^[a-z]{2}$' | xargs | sed -e 's@ @|@g'))"
+doubleCluePattern_3char="($(sort "${regexFile}" | egrep '^[a-z]{3}$' | xargs | sed -e 's@ @|@g'))"
+fourCharWords_withDoubleCharClue_pattern="^(${singleCluePattern_1char}${doubleCluePattern_3char}|${doubleCluePattern_2char}${singleCluePattern_2char})\$"
+pattern2="^${doubleCluePattern_all}{2}|${fourCharWords_withDoubleCharClue_pattern}"
 
+# 4 clue start is covered by double double-clue prefix regex
+# But double double-clue prefix does not cover some cases
+#   4-char words that contain a single double-char clue
+#     Can be fixed by checking for (1-char clue)(doubleCluePattern_3char)
+#   Does not cover some cases if there are multiple multi-char clues
+#     e.g., 4-char words from two double-char clues
+#     Not going to bother with this for now
+#   Does not cover some cases if there are multi-char clues with > 2 chars
+#     Not going to bother with this for now
 logDebug "Regex file composed from pairs of adjacent clues:"
 logDebug "\n$(cat ${regexFile})"
 logDebug " Pattern: '${pattern2}'"
