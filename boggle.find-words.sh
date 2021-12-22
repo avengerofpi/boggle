@@ -285,8 +285,8 @@ done
 # Backward diagonal pairs
 for i in {1..4}; do
   for j in {1..4}; do
-    a="${gridMap["$((i+1))$((j+0))"]}"
-    b="${gridMap["$((i+0))$((j+1))"]}"
+    a="${gridMap["$((i+0))$((j+0))"]}"
+    b="${gridMap["$((i+1))$((j+1))"]}"
     # TODO: Avoid duplicates
     echo "${a}${b}" >> "${regexFile}"
     echo "${b}${a}" >> "${regexFile}"
