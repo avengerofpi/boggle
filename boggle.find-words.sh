@@ -316,6 +316,260 @@ set -e
 mv "${filteredWordsFile2}" "${filteredWordsFile}"
 logFilteredHitCount
 
+# Switch from using regex patterns to filter down results to
+# actually checking each (remaining) possibility directly.
+
+# First, read the grid into an associative array with keys/value pairs of the form
+#   CLUE_VALUE="ab cd ..."
+# denotiving value CLUE_VALUE at row,column pairs "ab", "cd", etc.
+# The 5x5 structure of the grid file, and the validity of clues, should already
+# have been verified elsewhere.
+declare -i i=1;
+unset gridMap
+declare -A gridMap
+logDebug "Setting up 'gridMap' associative array:"
+while read i1 i2 i3 i4 i5; do
+  gridMap["${i1}"]+=" ${i}1"; gridMap["${i1}"]="${gridMap[${i1}]# }"
+  gridMap["${i2}"]+=" ${i}2"; gridMap["${i2}"]="${gridMap[${i2}]# }"
+  gridMap["${i3}"]+=" ${i}3"; gridMap["${i3}"]="${gridMap[${i3}]# }"
+  gridMap["${i4}"]+=" ${i}4"; gridMap["${i4}"]="${gridMap[${i4}]# }"
+  gridMap["${i5}"]+=" ${i}5"; gridMap["${i5}"]="${gridMap[${i5}]# }"
+  logDebug "Processed row '${i}', updating"
+  logDebug "  ${i1} -> '${gridMap[${i1}]}'"
+  logDebug "  ${i2} -> '${gridMap[${i2}]}'"
+  logDebug "  ${i3} -> '${gridMap[${i3}]}'"
+  logDebug "  ${i4} -> '${gridMap[${i4}]}'"
+  logDebug "  ${i5} -> '${gridMap[${i5}]}'"
+  i+=1
+done < <(cat "${GRID}")
+logDebug "Final gridMap contents:"
+for clue in "${!gridMap[@]}"; do
+  logDebug "  ${clue} -> '${gridMap[${clue}]}'"
+done
+logDebug "Grid file contains (reminder/for comparison):"
+logDebug "\n$(cat "${GRID}")"
+
+nextChar=""
+declare -i len=0
+declare -i pos=0
+declare -a paths=()
+declare -a allSuccessfulPaths=()
+declare -i allSuccessfulPathsI=0
+declare -a wordSuccessfulPaths=()
+declare -a successfulWord=()
+function initCheckWordVars() {
+  nextChar=""
+  len=${#word}
+  pos=0
+  paths=()
+  wordSuccessfulPaths=()
+  wordSuccessfulPathsI=0
+}
+
+function setInitialPaths() {
+  pos=0;
+  local char1="${word:${pos}:1}"
+  local char2="${word:${pos}:2}"
+  local char1_positions="${gridMap[${char1}]:-}"
+  local char2_positions="${gridMap[${char2}]:-}"
+  logDebug "Checking chars at position '${pos}':"
+  logDebug "  char1 '${char1}'  -> '${char1_positions}'"
+  logDebug "  char2 '${char2}' -> '${char2_positions}'"
+  paths=(${char1_positions} ${char2_positions})
+  i=0
+  # Encode each path as "<concatenated string of clue positions> <total length thus far>"
+  for char1_position in ${char1_positions}; do
+    paths[${i}]="${char1_position} 1 ${char1}"
+    i+=1
+  done
+  for char2_position in ${char2_positions}; do
+    paths[${i}]="${char2_position} 2 ${char2}"
+    i+=1
+  done
+  logDebug "  Num Starting Paths: ${#paths[@]}"
+  for path in "${paths[@]}"; do
+    logDebug "    ${path}"
+  done
+}
+
+function extendPaths() {
+  logDebug "Attempting to extend paths:"
+  for pathObj in "${paths[@]}"; do
+    logDebug "  ${pathObj}"
+  done # pathObj iteration
+
+  declare -a newPaths=()
+  declare -i newPathI=0
+  declare -i pathLen
+  for pathObj in "${paths[@]}"; do
+    # Parse path object
+    read path pathLen prefix < <(echo "${pathObj}")
+    pos=${pathLen}
+    logDebug "Inspecting partial path '${path}' of length '${pos}' (${prefix}) for word '${word}'"
+    # Extract next single-char and double-char options from $word
+    # TODO: handle case where there is only one char left in $word
+    char1="${word:${pos}:1}"
+    char2=" "
+    if [ ${pathLen} -le $((len-2)) ]; then
+      char2="${word:${pos}:2}"
+    fi
+    logDebug "  Checking char1 '${char1}' and char2 '${char2}' at position '${pos}'"
+    logDebug "    ${word}[${pos}:1] = '${char1}'"
+    logDebug "    ${word}[${pos}:2] = '${char2}'"
+    # Extract list (space-delimited string) of coordinates for char1 and char2
+    nextChar1Positions="${gridMap[${char1}]:-}"
+    nextChar2Positions="${gridMap[${char2}]:-}"
+    nextPositions="${nextChar1Positions} ${nextChar2Positions}"
+    if [ "${nextPositions}" != " " ]; then
+      logDebug "Found at least one position to attempt to extend our paths from"
+      # At least one potential clue may be able to extend our current path.
+      # But for each, we need to check that the clue coor hasn't been used
+      # already and, if it hasn't, that it validly extends the current path
+      logDebug "Inspecting positions '${nextChar1Positions}' for single-char extension '${char1}'"
+      for nextChar1Position in ${nextChar1Positions}; do
+        logDebug "Inspecting position ${nextChar1Position}"
+        newPathFound=false
+        local usedPositions="$(echo ${path} | sed -e 's@\(..\)@\1 @g' | sed -e 's@ $@@' )"
+        # Check it hasn't been used already in the current path
+        for usedPosition in ${usedPositions}; do
+          logDebug "  Checking against used position ${usedPosition}"
+          if [[ "${nextChar1Position}" == "${usedPosition}" ]]; then
+            logDebug "  Invalid - position has already been used"
+            break 2
+          fi
+        done
+        logDebug "    Valid - Position has not been used yet"
+        # Check that it validly extends the current path
+        logDebug "    Now check that it can extend the current path"
+        declare -i nextPositionI="${nextChar1Position:0:1}"
+        declare -i nextPositionJ="${nextChar1Position:1:1}"
+        declare lastUsedPosition="${usedPositions: -2}"
+        declare -i lastUsedPositionI="${lastUsedPosition:0:1}"
+        declare -i lastUsedPositionJ="${lastUsedPosition:1:1}"
+        logDebug "      Checking whether the putative next position '${nextChar1Position}' can extend from last used position '${lastUsedPosition}'"
+        declare -i diffI=$((nextPositionI - lastUsedPositionI))
+        declare -i diffJ=$((nextPositionJ - lastUsedPositionJ))
+        if [ "${diffI}" -ge -1 -a "${diffI}" -le 1 ]; then
+          if [ "${diffJ}" -ge -1 -a "${diffJ}" -le 1 ]; then
+            # If all checks passed, append the extended path to newPaths array
+            newPathFound=true
+            declare -i newLen=$((pathLen+1))
+            declare newPrefix="${prefix}${char1}"
+            newPath="${path}${nextChar1Position} ${newLen} ${newPrefix}"
+            logDebug "        Success! path extension found: '${newPath}'"
+            if [ ${newLen} -eq ${#word} ]; then
+              logDebug "          This path (len=${newLen}) completes the target word (len=${len})"
+              allSuccessfulPaths[${allSuccessfulPathsI}]="${newPath}"
+              wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPath}"
+              allSuccessfulPathsI+=1
+              wordSuccessfulPathsI+=1
+            else
+              newPaths[${newPathI}]="${newPath}"
+              newPathI+=1
+            fi
+          fi
+        fi
+        if [ ! ${newPathFound} ]; then
+          logDebug "      Failure - does not extend the path"
+        fi
+      done # extend path by a char1 clue
+
+      logDebug "Inspecting positions '${nextChar2Positions}' for double-char extension '${char2}'"
+      for nextChar2Position in ${nextChar2Positions}; do
+        logDebug "Inspecting position ${nextChar2Position}"
+        newPathFound=false
+        local usedPositions="$(echo ${path} | sed -e 's@\(..\)@\1 @g' | sed -e 's@ $@@' )"
+        # Check it hasn't been used already in the current path
+        for usedPosition in ${usedPositions}; do
+          logDebug "  Checking against used position ${usedPosition}"
+          if [[ "${nextChar2Position}" == "${usedPosition}" ]]; then
+            logDebug "  Invalid - position has already been used"
+            break 2
+          fi
+        done
+        logDebug "    Valid - Position has not been used yet"
+        # Check that it validly extends the current path
+        logDebug "    Now check that it can extend the current path"
+        declare -i nextPositionI="${nextChar2Position:0:1}"
+        declare -i nextPositionJ="${nextChar2Position:1:1}"
+        declare lastUsedPosition="${usedPositions: -2}"
+        declare -i lastUsedPositionI="${lastUsedPosition:0:1}"
+        declare -i lastUsedPositionJ="${lastUsedPosition:1:1}"
+        logDebug "      Checking whether the putative next position '${nextChar2Position}' can extend from last used position '${lastUsedPosition}'"
+        declare -i diffI=$((nextPositionI - lastUsedPositionI))
+        declare -i diffJ=$((nextPositionJ - lastUsedPositionJ))
+        if [ "${diffI}" -ge -1 -a "${diffI}" -le 1 ]; then
+          if [ "${diffJ}" -ge -1 -a "${diffJ}" -le 1 ]; then
+            # If all checks passed, append the extended path to newPaths array
+            newPathFound=true
+            declare -i newLen=$((pathLen+2))
+            declare newPrefix="${prefix}${char2}"
+            newPath="${path}${nextChar2Position} ${newLen} ${newPrefix}"
+            logDebug "        Success! path extension found: '${newPath}'"
+            if [ ${newLen} -eq ${#word} ]; then
+              logDebug "          This path (len=${newLen}) completes the target word (len=${len})"
+              allSuccessfulPaths[${allSuccessfulPathsI}]="${newPath}"
+              wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPath}"
+              allSuccessfulPathsI+=1
+              wordSuccessfulPathsI+=1
+            else
+              newPaths[${newPathI}]="${newPath}"
+              newPathI+=1
+            fi
+          fi
+        fi
+        if [ ! ${newPathFound} ]; then
+          logDebug "      Failure - does not extend the path"
+        fi
+
+
+      done # extend path by a char2 clue
+      #done < <(echo "${nextChar1Positions})
+      # check that the 
+    fi
+    logDebug "\n"
+  done # pathObj iteration
+  # Now replace $paths from $newPaths
+  paths=()
+  declare -i i=0
+  for newPath in "${newPaths[@]}"; do
+    paths[i]="${newPath}"
+    i+=1
+  done
+
+  # Log ending set of paths
+  logDebug "Set of paths after this extension attempt:"
+  for pathObj in "${paths[@]}"; do
+    logDebug "  ${pathObj}"
+  done # pathObj iteration
+  logDebug "\n"
+}
+
+function checkWordAgainstGrid() {
+  logDebug "Checking word '${word}'"
+  initCheckWordVars
+  setInitialPaths
+  logDebug "\n"
+  while [ ${#paths[@]} -gt 0 ]; do
+    extendPaths
+  done
+  declare -i numWordSuccessfulPaths=${#wordSuccessfulPaths[@]};
+  if [ ${numWordSuccessfulPaths} -gt 0 ]; then
+    logDebug "SUCCESS - found ${numWordSuccessfulPaths} valid paths for '${word}'"
+    logInfo "${word}"
+  else
+    logDebug "FAILURE - no paths found for word '${word}'"
+  fi
+  logDebug
+  #sleep 3
+}
+
+# Loop over words (lines) in words files
+while read word; do
+  checkWordAgainstGrid
+done < <(cat "${filteredWordsFile}")
+
+
 echo
 logInfo "Done"
 logInfo "Final results available in file"
