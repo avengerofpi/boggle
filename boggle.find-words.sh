@@ -297,20 +297,8 @@ done
 # occurs (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
 # generalize to clue lengths > 2 chars or to multiple double-char clues, this logic will need changing.
 doubleCluePattern_all="($(sort "${regexFile}" |  xargs | sed -e 's@ @|@g'))"
-doubleCluePattern_2char="($(sort "${regexFile}" | egrep '^[a-z]{2}$' | xargs | sed -e 's@ @|@g'))"
-doubleCluePattern_3char="($(sort "${regexFile}" | egrep '^[a-z]{3}$' | xargs | sed -e 's@ @|@g'))"
-fourCharWords_withDoubleCharClue_pattern="^(${singleCluePattern_1char}${doubleCluePattern_3char}|${doubleCluePattern_2char}${singleCluePattern_2char})\$"
-pattern2="^${doubleCluePattern_all}{2}|${fourCharWords_withDoubleCharClue_pattern}"
+pattern2="^${doubleCluePattern_all}+${singleCluePattern_1char}?"
 
-# 4 clue start is covered by double double-clue prefix regex
-# But double double-clue prefix does not cover some cases
-#   4-char words that contain a single double-char clue
-#     Can be fixed by checking for (1-char clue)(doubleCluePattern_3char)
-#   Does not cover some cases if there are multiple multi-char clues
-#     e.g., 4-char words from two double-char clues
-#     Not going to bother with this for now
-#   Does not cover some cases if there are multi-char clues with > 2 chars
-#     Not going to bother with this for now
 logDebug "Regex file composed from pairs of adjacent clues:"
 logDebug "\n$(cat ${regexFile})"
 logInfo  "Third pass filtering applying pattern '${pattern2}' to words list file"
