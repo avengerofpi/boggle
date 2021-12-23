@@ -303,7 +303,8 @@ done
 # occurs (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
 # generalize to clue lengths > 2 chars or to multiple double-char clues, this logic will need changing.
 doubleCluePattern_all="($(sort "${regexFile}" |  xargs | sed -e 's@ @|@g'))"
-pattern2="^${doubleCluePattern_all}+${singleCluePattern_1char}?"
+pattern2="^${doubleCluePattern_all}+${singleCluePattern_1char}?$"
+pattern3="^${singleCluePattern_1char}?${doubleCluePattern_all}+$"
 
 logDebug "Regex file composed from pairs of adjacent clues:"
 logDebug "\n$(cat ${regexFile})"
@@ -312,7 +313,7 @@ logInfo  "Third pass filtering applying pattern '${pattern2}' to words list file
 # Apply the new filter pattern
 filteredWordsFile2="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
 set +e
-egrep "${pattern2}" "${filteredWordsFile}" > "${filteredWordsFile2}"
+egrep "${pattern2}" "${filteredWordsFile}" | egrep "${pattern3}" > "${filteredWordsFile2}"
 if [ $? -eq 2 ]; then
   logError "There was an error with the grep command just run"
   exitCode=$((exitCode | GREP_ERROR))
