@@ -70,13 +70,13 @@ WORDS="${AMERICAN_ENGLISH_WORDS}"
 logInfo "Selected grid  file '${GRID}'"
 logInfo "Selected words file '${WORDS}'"
 
-# Exit codes (to be OR'd together ('|'))
+# Exit codes and handling (to be OR'd together ('|'))
 declare -i FILE_MISSING=1
 declare -i FILE_UNREADABLE=2
 declare -i INVALID_GRID_FILE=4
 declare -i GREP_ERROR=8
 
-# Exit if one of the above checks failed
+# Exit if exitCode has been set, log and exit if so
 function checkExitCode() {
   if [ ${exitCode} -gt 0 ]; then
     logError
@@ -84,6 +84,8 @@ function checkExitCode() {
     exit ${exitCode}
   fi
 }
+
+# Perform checks/validations before rest of code runs
 
 # Verify chosen files exist
 declare -i exitCode=0
@@ -104,7 +106,7 @@ elif [ ! -r "${WORDS}" ]; then
 fi
 checkExitCode
 
-# Validate number of lines
+# Validate number of lines in grid files
 declare -i EXPECTED_NUM_LINES=5
 declare -i numLines=$(wc "${GRID}" | awk '{print $1}')
 if [ ${numLines} -ne ${EXPECTED_NUM_LINES} ]; then
@@ -130,6 +132,9 @@ if [ -n "${gridAntiMatch}" ]; then
   exitCode=$((exitCode | INVALID_GRID_FILE))
 fi
 checkExitCode
+
+
+# Start fast filtering of words file
 
 # Construct basic regex pattern from grid file
 multiLetterClues=$(sed -e 's@\<[a-z]\>@@g' -e 's@ @\n@g' "${GRID}" | sort | xargs | sed -e 's@ @|@g')
@@ -229,7 +234,8 @@ logFilteredHitCount
 # First, read the grid into an associative array with keys/value pairs of the form
 #   ij=CLUE_VALUE
 # denotiving value CLUE_VALUE at row i, column j, 1 <= i,j <= 5
-# The structure of the grid file should already have been verified elsewhere.
+# The 5x5 structure of the grid file, and the validity of clues, should already
+# have been verified elsewhere.
 declare -i i=1;
 declare -A gridMap
 logDebug "Setting up 'gridMap' associative array:"
