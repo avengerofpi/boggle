@@ -565,6 +565,7 @@ function checkWordAgainstGrid() {
   if [ ${numWordSuccessfulPaths} -gt 0 ]; then
     logDebug "SUCCESS - found ${numWordSuccessfulPaths} valid paths for '${word}'"
     logInfo "${word}"
+    echo "${word}" >> "${filteredWordsFile2}"
   else
     logDebug "FAILURE - no paths found for word '${word}'"
   fi
@@ -573,9 +574,12 @@ function checkWordAgainstGrid() {
 }
 
 # Loop over words (lines) in words files
+# Reuse filteredWordsFil2
+touch "${filteredWordsFile2}"
 while read word; do
   checkWordAgainstGrid
 done < <(cat "${filteredWordsFile}")
+mv "${filteredWordsFile2}" "${filteredWordsFile}"
 
 
 echo
