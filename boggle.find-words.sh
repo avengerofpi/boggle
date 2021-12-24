@@ -157,9 +157,13 @@ function logFilteredHitCount() {
 gridBasename="$(basename "${GRID}")"
 wordsBasename="$(basename "${WORDS}")"
 datetime="$(date +"%F-%Hh%Mm%Ss")"
+mkdir -p tmp
 filteredWordsFile="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered.txt"
 logInfo "Saving filtered words to file"
 logInfo "  ${filteredWordsFile}"
+cp "${WORDS}" "${filteredWordsFile}"
+chmod u+w "${filteredWordsFile}"
+logFilteredHitCount
 # Avoid grep error
 set +e
 egrep --color=never "${pattern1}" "${WORDS}" > "${filteredWordsFile}"
