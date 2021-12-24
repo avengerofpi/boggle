@@ -4,7 +4,7 @@
 set -eu
 
 # Logging levels
-   debug=true;
+   debug=false;
     info=true;
     warn=true;
    error=true;
