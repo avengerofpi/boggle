@@ -61,12 +61,15 @@ edit data/grids/sample-boggle-grid.01.txt
 set splitbelow splitright
 wincmd _ | wincmd |
 vsplit
-1wincmd h
+wincmd _ | wincmd |
+vsplit
+2wincmd h
 wincmd _ | wincmd |
 split
 wincmd _ | wincmd |
 split
 2wincmd k
+wincmd w
 wincmd w
 wincmd w
 wincmd w
@@ -78,12 +81,13 @@ set winheight=1
 set winminwidth=0
 set winwidth=1
 exe '1resize ' . ((&lines * 13 + 22) / 44)
-exe 'vert 1resize ' . ((&columns * 18 + 97) / 195)
+exe 'vert 1resize ' . ((&columns * 20 + 94) / 188)
 exe '2resize ' . ((&lines * 14 + 22) / 44)
-exe 'vert 2resize ' . ((&columns * 18 + 97) / 195)
+exe 'vert 2resize ' . ((&columns * 20 + 94) / 188)
 exe '3resize ' . ((&lines * 13 + 22) / 44)
-exe 'vert 3resize ' . ((&columns * 18 + 97) / 195)
-exe 'vert 4resize ' . ((&columns * 176 + 97) / 195)
+exe 'vert 3resize ' . ((&columns * 20 + 94) / 188)
+exe 'vert 4resize ' . ((&columns * 22 + 94) / 188)
+exe 'vert 5resize ' . ((&columns * 144 + 94) / 188)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -338,11 +342,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 2 - ((1 * winheight(0) + 7) / 14)
+let s:l = 4 - ((3 * winheight(0) + 7) / 14)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-2
+4
 normal! 0
 wincmd w
 argglobal
@@ -475,6 +479,137 @@ exe s:l
 normal! zt
 1
 normal! 0
+wincmd w
+argglobal
+if bufexists("data/words/american-english.shorter-list.words") | buffer data/words/american-english.shorter-list.words | else | edit data/words/american-english.shorter-list.words | endif
+setlocal keymap=
+setlocal noarabic
+setlocal autoindent
+setlocal backupcopy=
+setlocal balloonexpr=
+setlocal nobinary
+setlocal nobreakindent
+setlocal breakindentopt=
+setlocal bufhidden=
+setlocal buflisted
+setlocal buftype=
+setlocal nocindent
+setlocal cinkeys=0{,0},0),0],:,0#,!^F,o,O,e
+setlocal cinoptions=
+setlocal cinwords=if,else,while,do,for,switch
+setlocal colorcolumn=
+setlocal comments=s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-
+setlocal commentstring=/*%s*/
+setlocal complete=.,w,b,u,t,i
+setlocal concealcursor=
+setlocal conceallevel=0
+setlocal completefunc=
+setlocal nocopyindent
+setlocal cryptmethod=
+setlocal nocursorbind
+setlocal nocursorcolumn
+setlocal nocursorline
+setlocal cursorlineopt=both
+setlocal define=
+setlocal dictionary=
+setlocal nodiff
+setlocal equalprg=
+setlocal errorformat=
+setlocal expandtab
+if &filetype != ''
+setlocal filetype=
+endif
+setlocal fixendofline
+setlocal foldcolumn=0
+setlocal foldenable
+setlocal foldexpr=0
+setlocal foldignore=#
+setlocal foldlevel=0
+setlocal foldmarker={{{,}}}
+setlocal foldmethod=manual
+setlocal foldminlines=1
+setlocal foldnestmax=20
+setlocal foldtext=foldtext()
+setlocal formatexpr=
+setlocal formatoptions=tcq
+setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
+setlocal formatprg=
+setlocal grepprg=
+setlocal iminsert=0
+setlocal imsearch=-1
+setlocal include=
+setlocal includeexpr=
+setlocal indentexpr=
+setlocal indentkeys=0{,0},0),0],:,0#,!^F,o,O,e
+setlocal noinfercase
+setlocal iskeyword=@,48-57,_,192-255
+setlocal keywordprg=
+setlocal nolinebreak
+setlocal nolisp
+setlocal lispwords=
+setlocal nolist
+setlocal makeencoding=
+setlocal makeprg=
+setlocal matchpairs=(:),{:},[:]
+setlocal nomodeline
+setlocal modifiable
+setlocal nrformats=bin,octal,hex
+set number
+setlocal number
+setlocal numberwidth=4
+setlocal omnifunc=
+setlocal path=
+setlocal nopreserveindent
+setlocal nopreviewwindow
+setlocal quoteescape=\\
+setlocal noreadonly
+setlocal norelativenumber
+setlocal norightleft
+setlocal rightleftcmd=search
+setlocal noscrollbind
+setlocal scrolloff=-1
+setlocal shiftwidth=2
+setlocal noshortname
+setlocal sidescrolloff=-1
+setlocal signcolumn=auto
+setlocal nosmartindent
+setlocal softtabstop=0
+setlocal nospell
+setlocal spellcapcheck=[.?!]\\_[\\])'\"\	\ ]\\+
+setlocal spellfile=
+setlocal spelllang=en
+setlocal statusline=
+setlocal suffixesadd=
+setlocal swapfile
+setlocal synmaxcol=3000
+if &syntax != ''
+setlocal syntax=
+endif
+setlocal tabstop=2
+setlocal tagcase=
+setlocal tagfunc=
+setlocal tags=
+setlocal termwinkey=
+setlocal termwinscroll=10000
+setlocal termwinsize=
+setlocal textwidth=0
+setlocal thesaurus=
+setlocal noundofile
+setlocal undolevels=-123456
+setlocal varsofttabstop=
+setlocal vartabstop=
+setlocal wincolor=
+setlocal nowinfixheight
+setlocal nowinfixwidth
+setlocal wrap
+setlocal wrapmargin=0
+silent! normal! zE
+let s:l = 2 - ((1 * winheight(0) + 21) / 42)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+2
+normal! 06|
 wincmd w
 argglobal
 if bufexists("boggle.find-words.sh") | buffer boggle.find-words.sh | else | edit boggle.find-words.sh | endif
@@ -612,61 +747,54 @@ silent! normal! zE
 42,48fold
 13,48fold
 49,56fold
-57,67fold
-68,73fold
-74,79fold
-80,117fold
-118,125fold
-126,132fold
-126,143fold
-144,196fold
-199,217fold
-224,233fold
-234,243fold
-244,253fold
-254,263fold
-218,264fold
-265,271fold
-272,277fold
-197,277fold
+57,69fold
+70,78fold
+79,93fold
+96,114fold
+115,123fold
+124,141fold
+94,141fold
+145,187fold
+188,241fold
+244,263fold
+264,310fold
 13
+normal! zo
+42
 normal! zo
 13
 normal! zc
-126
+57
 normal! zo
-126
+70
 normal! zo
-126
-normal! zc
-197
+94
 normal! zo
-218
+124
 normal! zo
-218
-normal! zc
-197
-normal! zc
-let s:l = 197 - ((79 * winheight(0) + 21) / 42)
+145
+normal! zo
+let s:l = 75 - ((74 * winheight(0) + 21) / 42)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-197
-normal! 0
+75
+normal! 019|
 wincmd w
-4wincmd w
+5wincmd w
 exe '1resize ' . ((&lines * 13 + 22) / 44)
-exe 'vert 1resize ' . ((&columns * 18 + 97) / 195)
+exe 'vert 1resize ' . ((&columns * 20 + 94) / 188)
 exe '2resize ' . ((&lines * 14 + 22) / 44)
-exe 'vert 2resize ' . ((&columns * 18 + 97) / 195)
+exe 'vert 2resize ' . ((&columns * 20 + 94) / 188)
 exe '3resize ' . ((&lines * 13 + 22) / 44)
-exe 'vert 3resize ' . ((&columns * 18 + 97) / 195)
-exe 'vert 4resize ' . ((&columns * 176 + 97) / 195)
+exe 'vert 3resize ' . ((&columns * 20 + 94) / 188)
+exe 'vert 4resize ' . ((&columns * 22 + 94) / 188)
+exe 'vert 5resize ' . ((&columns * 144 + 94) / 188)
 tabnext 1
-badd +0 boggle.find-words.sh
 badd +5 data/grids/sample-boggle-grid.01.txt
-badd +0 data/grids/sample-boggle-grid.02.txt
-badd +0 data/grids/sample-boggle-grid.03.txt
+badd +1 boggle.find-words.sh
+badd +1 data/grids/sample-boggle-grid.02.txt
+badd +1 data/grids/sample-boggle-grid.03.txt
 badd +639 session.vim
 badd +70 ~/git/sudoku/sudoku.sh
 badd +1 tmp/filtered-words.10c.txt
@@ -674,6 +802,8 @@ badd +2 tmp/filtered-words.X3d.txt
 badd +4721 tmp/sample-boggle-grid.01.txt.filtered-words.BNT.txt
 badd +14 tmp/2021-12-17-17h03m35s---sample-boggle-grid.01.txt---american-english.words---filtered2.txt
 badd +215 tmp/2021-12-17-17h03m35s---sample-boggle-grid.01.txt---american-english.words---filtered.txt
+badd +0 data/words/american-english.shorter-list.words
+badd +128 ~/git/boggle/tmp/2021-12-21-22h37m56s---sample-boggle-grid.01.txt---regex-list.txt
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0
   silent exe 'bwipe ' . s:wipebuf
 endif
