@@ -584,9 +584,36 @@ while read word; do
 done < <(cat "${filteredWordsFile}")
 mv "${filteredWordsFile2}" "${filteredWordsFile}"
 
+function scoreWordsFile() {
+  wordsFile="${1}"
+  logDebug "Scoring words file '${wordsFile}'"
+  declare -A scoringMap=(
+    [4]=1
+    [5]=2
+    [6]=3
+    [7]=5
+    [8,]=11
+  )
+  declare -i v cnt vv
+  for n in "${!scoringMap[@]}"; do
+    v="${scoringMap[${n}]}"
+    logDebug "Scoring for length ${n} (each is worth ${v} points)"
+    cnt=$(egrep "^.{${n}}$" "${wordsFile}" | wc -l)
+    vv=$((v * cnt))
+    logDebug "  Found ${cnt} entries (worth ${vv} more points)"
+    score+=${vv}
+  done
+  logInfo
+  logInfo "Scoring words file '${wordsFile}' ..."
+  logInfo "  ${score} points"
+}
 
 echo
 logInfo "Done"
 logInfo "Final results available in file"
 logInfo "  ${filteredWordsFile}"
 logFilteredHitCount
+
+# Score
+declare -i score=0
+scoreWordsFile "${filteredWordsFile}"
