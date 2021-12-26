@@ -59,16 +59,13 @@ GRID_01="${PWD}/data/grids/sample-boggle-grid.01.txt"
 GRID_03="${PWD}/data/grids/sample-boggle-grid.03.txt"
 GRID_02="${PWD}/data/grids/sample-boggle-grid.02.txt"
 GRID_FILES=(
-  "${GRID_01}"
-  "${GRID_02}"
-  "${GRID_03}"
+  ${PWD}/data/grids/*.txt
 )
 
 AMERICAN_ENGLISH_WORDS="${PWD}/data/words/american-english.boggle.words"
 BOGGLE_WORDS="${PWD}/data/words/international-english.boggle.words"
 WORD_FILES=(
-  "${AMERICAN_ENGLISH_WORDS}"
-  "${BOGGLE_WORDS}"
+  ${PWD}/data/words/*.words
 )
 
 BOGGLE_DICE_TXT="${PWD}/data/dice/boggle-dice.txt"
