@@ -214,17 +214,6 @@ checkExitCode
 
 # Start fast filtering of words file
 
-# Construct basic regex pattern from grid file
-multiLetterClues=$(sed -e 's@\<[a-z]\>@@g' -e 's@ @\n@g' "${GRID}" | sort | xargs | sed -e 's@ @|@g')
-logDebug "multiLetterClues: '${multiLetterClues}' (should only be one)"
-singleLetterClues=$(sed -e 's@\<[a-z]\{2,\}\>@@g' -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @@g')
-logDebug "singleLetterClues: '${singleLetterClues}'"
-singleCluePattern_1char="([${singleLetterClues}])"
-singleCluePattern_2char="(${multiLetterClues})"
-singleCluePattern="(${singleCluePattern_1char}|${singleCluePattern_2char})"
-pattern1="^${singleCluePattern}+\$"
-logDebug "pattern1: '${pattern1}'"
-
 function logFilteredHitCount() {
   numHits=$(wc -l "${filteredWordsFile}" | awk '{print $1}')
   logInfo "Number of filtered hits found: '${numHits}'"
@@ -241,21 +230,6 @@ logInfo "  ${filteredWordsFile}"
 cp "${WORDS}" "${filteredWordsFile}"
 chmod u+w "${filteredWordsFile}"
 logFilteredHitCount
-# Avoid grep error
-set +e
-egrep --color=never "${pattern1}" "${WORDS}" > "${filteredWordsFile}"
-if [ $? -eq 2 ]; then
-  logError "There was an error with the grep command just run"
-  exitCode=$((exitCode | GREP_ERROR))
-fi
-checkExitCode
-set -e
-logInfo "First pass filtering applying pattern '${pattern1}' to words list file"
-logFilteredHitCount
-numTrimmedHits=5
-prefixHits="$(head -${numTrimmedHits} "${filteredWordsFile}" | sed -e 's@^@  @')"
-suffixHits="$(tail -${numTrimmedHits} "${filteredWordsFile}" | sed -e 's@^@  @')"
-logDebug "\n${prefixHits}\n  ...\n${suffixHits}"
 
 # Add a pattern to filter out hits with too many of any char (or multi-char)
 
@@ -384,6 +358,8 @@ done
 # Only handles single-char and double-char clues correctly and only when exactly one double-char clue
 # occurs (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
 # generalize to clue lengths > 2 chars or to multiple double-char clues, this logic will need changing.
+singleLetterClues=$(sed -e 's@\<[a-z]\{2,\}\>@@g' -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @@g')
+singleCluePattern_1char="([${singleLetterClues}])"
 doubleCluePattern_all="($(sort "${regexFile}" |  xargs | sed -e 's@ @|@g'))"
 pattern2="^${doubleCluePattern_all}+${singleCluePattern_1char}?$"
 pattern3="^${singleCluePattern_1char}?${doubleCluePattern_all}+$"
