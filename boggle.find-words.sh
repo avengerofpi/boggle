@@ -614,7 +614,7 @@ mv "${filteredWordsFile2}" "${filteredWordsFile}"
 
 function scoreWordsFile() {
   wordsFile="${1}"
-  logDebug "Scoring words file '${wordsFile}'"
+  logInfo "Scoring words file '${wordsFile}'"
   declare -A scoringMap=(
     [4]=1
     [5]=2
@@ -622,18 +622,18 @@ function scoreWordsFile() {
     [7]=5
     [8,]=11
   )
-  declare -i v cnt vv
-  for n in "${!scoringMap[@]}"; do
-    v="${scoringMap[${n}]}"
-    logDebug "Scoring for length ${n} (each is worth ${v} points)"
-    cnt=$(egrep "^.{${n}}$" "${wordsFile}" | wc -l)
-    vv=$((v * cnt))
-    logDebug "  Found ${cnt} entries (worth ${vv} more points)"
-    score+=${vv}
+  declare -i valuePerWord numWords inc
+  for wordLengthToGrepFor in $(for k in "${!scoringMap[@]}"; do echo "${k}"; done | sort -n); do
+    valuePerWord="${scoringMap[${wordLengthToGrepFor}]}"
+    numWords=$(egrep "^.{${wordLengthToGrepFor}}$" "${wordsFile}" | wc -l)
+    inc=$((valuePerWord * numWords))
+    local formatStr="  %3d words of length %-2s -> %2d points/word -> %4d more points"
+    local outStr="$(printf "${formatStr}" ${numWords} ${wordLengthToGrepFor} ${valuePerWord} ${inc})"
+    logInfo "${outStr}"
+    score+=${inc}
   done
   logInfo
-  logInfo "Scoring words file '${wordsFile}' ..."
-  logInfo "  ${score} points"
+  logInfo "  ${score} points total"
 }
 
 echo
@@ -644,4 +644,5 @@ logFilteredHitCount
 
 # Score
 declare -i score=0
+logInfo
 scoreWordsFile "${filteredWordsFile}"
