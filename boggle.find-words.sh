@@ -58,15 +58,43 @@ function logHeader()   {                     echo -e "${HEADER_COLOR}"          
 GRID_01="${PWD}/data/grids/sample-boggle-grid.01.txt"
 GRID_03="${PWD}/data/grids/sample-boggle-grid.03.txt"
 GRID_02="${PWD}/data/grids/sample-boggle-grid.02.txt"
+GRID_FILES=(
+  "${GRID_01}"
+  "${GRID_02}"
+  "${GRID_03}"
+)
 
 AMERICAN_ENGLISH_WORDS="${PWD}/data/words/american-english.boggle.words"
 BOGGLE_WORDS="${PWD}/data/words/international-english.boggle.words"
+WORD_FILES=(
+  "${AMERICAN_ENGLISH_WORDS}"
+  "${BOGGLE_WORDS}"
+)
 
 BOGGLE_DICE_TXT="${PWD}/data/dice/boggle-dice.txt"
 
 # Select specific files to use this run
-GRID="${GRID_01}"
-WORDS="${AMERICAN_ENGLISH_WORDS}"
+GRID_PROMPT="Choose the grid file to use: "
+WORDS_PROMPT="Choose the words file to use: "
+# Select grid file
+declare GRID WORDS
+PS3="${GRID_PROMPT}"
+select GRID in "${GRID_FILES[@]}"; do
+  if [ -n "${GRID}" ]; then
+    break
+  else
+    echo "Try again. Focus!"
+  fi
+done
+# Select words file
+PS3="${WORDS_PROMPT}"
+select WORDS in "${WORD_FILES[@]}"; do
+  if [ -n "${WORDS}" ]; then
+    break
+  else
+    echo "Try again. Focus!"
+  fi
+done
 logInfo "Selected grid  file '${GRID}'"
 logInfo "Selected words file '${WORDS}'"
 
