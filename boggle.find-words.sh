@@ -55,15 +55,10 @@ function logCritical() { if $critical;  then echo -e "${CRITICAL_COLOR}CRITICAL:
 function logHeader()   {                     echo -e "${HEADER_COLOR}"            "${@}${TPUT_RESET}"; }
 
 # Declare some files for later selection
-GRID_01="${PWD}/data/grids/sample-boggle-grid.01.txt"
-GRID_03="${PWD}/data/grids/sample-boggle-grid.03.txt"
-GRID_02="${PWD}/data/grids/sample-boggle-grid.02.txt"
 GRID_FILES=(
   ${PWD}/data/grids/*.txt
 )
 
-AMERICAN_ENGLISH_WORDS="${PWD}/data/words/american-english.boggle.words"
-BOGGLE_WORDS="${PWD}/data/words/international-english.boggle.words"
 WORD_FILES=(
   ${PWD}/data/words/*.words
 )
