@@ -65,28 +65,86 @@ WORD_FILES=(
 
 BOGGLE_DICE_TXT="${PWD}/data/dice/boggle-dice.txt"
 
+# Add argument parsing
+# Based on suggestions from https://drewstokes.com/bash-argument-parsing
+#declare PARAMS=""
+declare randomFiles=false
+declare GRID="" WORDS=""
+while (( "$#" )); do
+  case "$1" in
+    -g|--grid-file)
+      if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        GRID="$2"
+        logDebug "Choosing GRID file '${GRID}'"
+        shift 2
+      else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
+      ;;
+    -w|--words-file)
+      if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        WORDS="$2"
+        logDebug "Choosing WORDS file '${WORDS}'"
+        shift 2
+      else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
+      ;;
+    -r|--random-files)
+      randomFiles=true
+        logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
+        shift 1
+      ;;
+    -*|--*=) # unsupported flags
+      echo "Error: Unsupported flag $1" >&2
+      exit 1
+      ;;
+    *) # preserve positional arguments
+      #PARAMS="$PARAMS $1"
+      logError "Encountered a positional param, but no positional params are supported"
+      exit 2
+      #shift
+      ;;
+  esac
+done
+# set positional arguments in their proper place
+#eval set -- "$PARAMS"
+
 # Select specific files to use this run
 GRID_PROMPT="Choose the grid file to use: "
 WORDS_PROMPT="Choose the words file to use: "
 # Select grid file
-declare GRID WORDS
-PS3="${GRID_PROMPT}"
-select GRID in "${GRID_FILES[@]}"; do
-  if [ -n "${GRID}" ]; then
-    break
+if [ -z "${GRID}" ]; then
+  if ${randomFiles}; then
+    GRID="$(for f in "${GRID_FILES[@]}"; do echo "${f}"; done | shuf | head -1)"
   else
-    echo "Try again. Focus!"
+    PS3="${GRID_PROMPT}"
+    select GRID in "${GRID_FILES[@]}"; do
+      if [ -n "${GRID}" ]; then
+        break
+      else
+        echo "Try again. Focus!"
+      fi
+    done
   fi
-done
+fi
 # Select words file
-PS3="${WORDS_PROMPT}"
-select WORDS in "${WORD_FILES[@]}"; do
-  if [ -n "${WORDS}" ]; then
-    break
+if [ -z "${WORDS}" ]; then
+  if ${randomFiles}; then
+    WORDS="$(for f in "${WORD_FILES[@]}"; do echo "${f}"; done | shuf | head -1)"
   else
-    echo "Try again. Focus!"
+    PS3="${WORDS_PROMPT}"
+    select WORDS in "${WORD_FILES[@]}"; do
+      if [ -n "${WORDS}" ]; then
+        break
+      else
+        echo "Try again. Focus!"
+      fi
+    done
   fi
-done
+fi
 logInfo "Selected grid  file '${GRID}'"
 logInfo "Selected words file '${WORDS}'"
 
