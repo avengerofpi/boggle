@@ -205,8 +205,8 @@ fi
 set -e
 if [ -n "${gridAntiMatch}" ]; then
   logError "One or more lines of the grid file looks incorrect."
-  logError "  All lines should match the regex '${gridLinePattern}' but we found the following lines:"
-  logError "\n$(echo "${gridAntiMatch}")"
+  logError "  All lines should match the regex '${gridLinePattern}' but we found the following lines (maybe truncated):"
+  logError "\n$(echo "${gridAntiMatch}" | head)"
   exitCode=$((exitCode | INVALID_GRID_FILE))
 fi
 checkExitCode
