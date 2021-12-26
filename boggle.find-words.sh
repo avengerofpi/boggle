@@ -211,7 +211,6 @@ if [ -n "${gridAntiMatch}" ]; then
 fi
 checkExitCode
 
-
 # Start fast filtering of words file
 
 function logFilteredHitCount() {
@@ -219,14 +218,14 @@ function logFilteredHitCount() {
   logInfo "Number of filtered hits found: '${numHits}'"
 }
 
-# Run basic pattern agains word list save results to a tmp file
+# Create writable copy of starting words list file.
+# We will filter on this copy rather than on the original.
 gridBasename="$(basename "${GRID}")"
 wordsBasename="$(basename "${WORDS}")"
 datetime="$(date +"%F-%Hh%Mm%Ss")"
 mkdir -p tmp
 filteredWordsFile="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered.txt"
-logInfo "Saving filtered words to file"
-logInfo "  ${filteredWordsFile}"
+logInfo "Saving filtered words to file: ${filteredWordsFile}"
 cp "${WORDS}" "${filteredWordsFile}"
 chmod u+w "${filteredWordsFile}"
 logFilteredHitCount
@@ -282,7 +281,7 @@ for clue in "${!clueCnts[@]}"; do
   logDebug "checkPattern: '${checkPattern}'"
   sed -i -e "/${checkPattern}/d" "${filteredWordsFile}"
 done
-logInfo "Second pass filter ensuring no char/clue occurs too many times"
+logDebug "Second pass filter ensuring no char/clue occurs too many times"
 logFilteredHitCount
 
 # Now process pairs of adjacent clues.
@@ -311,8 +310,8 @@ logDebug "\n$(cat "${GRID}")"
 declare -i i j
 regexFile="${PWD}/tmp/${datetime}---${gridBasename}---regex-list.txt"
 touch "${regexFile}"
-logInfo "Creating regex file '${regexFile}'"
-logInfo "  For now it will just contain patterns composed from pairs of adjacent clues"
+logDebug "Creating regex file '${regexFile}'"
+logDebug "  For now it will just contain patterns composed from pairs of adjacent clues"
 # Horizontal pairs
 for i in {1..5}; do
   for j in {1..4}; do
@@ -356,7 +355,7 @@ done
 
 # Construct regex
 # Only handles single-char and double-char clues correctly and only when exactly one double-char clue
-# occurs (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
+# occurs in the grid (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
 # generalize to clue lengths > 2 chars or to multiple double-char clues, this logic will need changing.
 singleLetterClues=$(sed -e 's@\<[a-z]\{2,\}\>@@g' -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @@g')
 singleCluePattern_1char="([${singleLetterClues}])"
@@ -364,9 +363,14 @@ doubleCluePattern_all="($(sort "${regexFile}" |  xargs | sed -e 's@ @|@g'))"
 pattern2="^${doubleCluePattern_all}+${singleCluePattern_1char}?$"
 pattern3="^${singleCluePattern_1char}?${doubleCluePattern_all}+$"
 
+logDebug "singleLetterClues:         ${singleLetterClues}"
+logDebug "singleCluePattern_1char: ${singleCluePattern_1char}"
+logDebug "doubleCluePattern_all:   ${doubleCluePattern_all}"
 logDebug "Regex file composed from pairs of adjacent clues:"
 logDebug "\n$(cat ${regexFile})"
-logInfo  "Third pass filtering applying pattern '${pattern2}' to words list file"
+logDebug "Third pass filtering applying the following patterns to words list file:"
+logDebug " '${pattern2}'"
+logDebug " '${pattern3}'"
 
 # Apply the new filter pattern
 filteredWordsFile2="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
@@ -586,11 +590,7 @@ function extendPaths() {
         if [ ! ${newPathFound} ]; then
           logDebug "      Failure - does not extend the path"
         fi
-
-
       done # extend path by a char2 clue
-      #done < <(echo "${nextChar1Positions})
-      # check that the 
     fi
     logDebug "\n"
   done # pathObj iteration
@@ -621,7 +621,7 @@ function checkWordAgainstGrid() {
   declare -i numWordSuccessfulPaths=${#wordSuccessfulPaths[@]};
   if [ ${numWordSuccessfulPaths} -gt 0 ]; then
     logDebug "SUCCESS - found ${numWordSuccessfulPaths} valid paths for '${word}'"
-    logInfo "${word}"
+    logDebug "${word}"
     echo "${word}" >> "${filteredWordsFile2}"
   else
     logDebug "FAILURE - no paths found for word '${word}'"
