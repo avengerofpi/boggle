@@ -32,13 +32,6 @@ BRIGHT_PURPLE_FG="${BRIGHT}${PURPLE_FG}";
  GREEN_BG="$(tput setab 2)";
 YELLOW_BG="$(tput setab 3)";
 
-START_COLOR="${BRIGHT_RED_FG}";
-GUESS_COLOR="${BRIGHT_YELLOW_FG}";
-BOARD_COLOR="${FAINT_GREEN_FG}";
-
-FLAGGED_START_HIGHLIGHT="${GREEN_BG}";
-FLAGGED_GUESS_HIGHLIGHT="${RED_BG}";
-
    DEBUG_COLOR="${BRIGHT_CYAN_FG}";
     INFO_COLOR="${BRIGHT_YELLOW_FG}";
     WARN_COLOR="${BRIGHT_PURPLE_FG}";
@@ -94,8 +87,8 @@ while (( "$#" )); do
       ;;
     -r|--random-files)
       randomFiles=true
-        logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
-        shift 1
+      logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
+      shift 1
       ;;
     -*|--*=) # unsupported flags
       echo "Error: Unsupported flag $1" >&2
