@@ -63,7 +63,7 @@ WORD_FILES=(
   ${PWD}/data/words/*.words
 )
 
-BOGGLE_DICE_TXT="${PWD}/data/dice/boggle-dice.txt"
+BOGGLE_DICE_TXT="${PWD}/data/dice/sample-boggle-dice.txt"
 
 # Add argument parsing
 # Based on suggestions from https://drewstokes.com/bash-argument-parsing
@@ -112,13 +112,58 @@ done
 # set positional arguments in their proper place
 #eval set -- "$PARAMS"
 
+# Generate a random boggle board from the selected dice config file
+function generateRandomGrid() {
+  declare -a shuffledDice
+  readarray -t shuffledDice < <(shuf ${BOGGLE_DICE_TXT})
+  logDebug "Dice:"
+  for die in "${shuffledDice[@]}"; do
+    logDebug "${die}";
+  done
+  # Figure out the branch name to use, if first choice is already taken
+  declare -i idx
+  randomGridRootDir="${PWD}/data/grids/random"
+  mkdir -p "${randomGridRootDir}"
+  randomGridFilenameBasename="random-boggle-grid.%03d.txt"
+  randomGridFilenameFormatStr="${randomGridRootDir}/${randomGridFilenameBasename}"
+  logDebug "Generating a new, random grid file"
+  logDebug "  Using dice file '${BOGGLE_DICE_TXT}'"
+  for idx in {0..999}; do
+    putative_gridFilename="$(printf "${randomGridFilenameFormatStr}" "${idx}")"
+    logDebug "Checking whether file '${putative_gridFilename}' exists already"
+    if [ ! -e "${putative_gridFilename}" ]; then
+      GRID="${putative_gridFilename}";
+      logDebug "  File does not exist yet. We will use this filename"
+      break;
+    fi;
+  done;
+  touch "${GRID}"
+  declare -i rowNum colNum
+  for rowNum in {0..4}; do
+    line=""
+    for colNum in {0..4}; do
+      idx=$((5*rowNum + colNum))
+      die="${shuffledDice[${idx}]}"
+      clue="$(echo "${die}" | sed -e 's@ @\n@g' | shuf | head -1)"
+      logDebug "Rolled die '${die}' and selected face '${clue}'"
+      line+="${clue} "
+    done
+    line="${line% }\n"
+    logDebug "Appending line '${line}' to grid file"
+    printf "${line}" >> "${GRID}"
+  done
+  logInfo "Random grid file generated:"
+  logInfo "\n$(cat "${GRID}")"
+}
+
 # Select specific files to use this run
 GRID_PROMPT="Choose the grid file to use: "
 WORDS_PROMPT="Choose the words file to use: "
 # Select grid file
 if [ -z "${GRID}" ]; then
   if ${randomFiles}; then
-    GRID="$(for f in "${GRID_FILES[@]}"; do echo "${f}"; done | shuf | head -1)"
+    #GRID="$(for f in "${GRID_FILES[@]}"; do echo "${f}"; done | shuf | head -1)"
+    generateRandomGrid
   else
     PS3="${GRID_PROMPT}"
     select GRID in "${GRID_FILES[@]}"; do
