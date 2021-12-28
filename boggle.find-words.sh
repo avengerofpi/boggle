@@ -3,12 +3,17 @@
 # Exit on errors. Undefined vars count as errors.
 set -eu
 
+# Output setup
+datetime="$(date +"%F-%Hh%Mm%Ss")"
+outputDir="${PWD}/tmp/${datetime}"
+mkdir -p "${outputDir}"
+
 # Logging levels
    debug=false;
     info=true;
     warn=true;
    error=true;
-critical=true;
+scoreLog=true;
 
 # Coloration
 TPUT_RESET="$(tput sgr0)";
@@ -36,16 +41,14 @@ YELLOW_BG="$(tput setab 3)";
     INFO_COLOR="${BRIGHT_YELLOW_FG}";
     WARN_COLOR="${BRIGHT_PURPLE_FG}";
    ERROR_COLOR="${BRIGHT_RED_FG}";
-CRITICAL_COLOR="${YELLOW_BG}${BRIGHT_RED_FG}";
-  HEADER_COLOR="${YELLOW_BG}${BRIGHT_RED}";
+   SCORE_COLOR="${YELLOW_BG}${BRIGHT_RED_FG}";
 
 # Logging functions
 function logDebug()    { if $debug;     then echo -e "${DEBUG_COLOR}DEBUG:"       "${@}${TPUT_RESET}"; fi; }
 function logInfo()     { if $info;      then echo -e "${INFO_COLOR}INFO:"         "${@}${TPUT_RESET}"; fi; }
 function logWarn()     { if $warn;      then echo -e "${WARN_COLOR}WARN:"         "${@}${TPUT_RESET}"; fi; }
 function logError()    { if $error;     then echo -e "${ERROR_COLOR}ERROR:"       "${@}${TPUT_RESET}"; fi; }
-function logCritical() { if $critical;  then echo -e "${CRITICAL_COLOR}CRITICAL:" "${@}${TPUT_RESET}"; fi; }
-function logHeader()   {                     echo -e "${HEADER_COLOR}"            "${@}${TPUT_RESET}"; }
+function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR}SCORE:"       "${@}${TPUT_RESET}"; fi; }
 
 # Declare some files for later selection
 GRID_FILES=(
@@ -117,11 +120,11 @@ function generateRandomGrid() {
   declare -i idx
   randomGridRootDir="${PWD}/data/grids/random"
   mkdir -p "${randomGridRootDir}"
-  randomGridFilenameBasename="random-boggle-grid.%03d.txt"
+  randomGridFilenameBasename="random-boggle-grid.%05d.txt"
   randomGridFilenameFormatStr="${randomGridRootDir}/${randomGridFilenameBasename}"
   logDebug "Generating a new, random grid file"
   logDebug "  Using dice file '${BOGGLE_DICE_TXT}'"
-  for idx in {0..999}; do
+  for idx in {0..99999}; do
     putative_gridFilename="$(printf "${randomGridFilenameFormatStr}" "${idx}")"
     logDebug "Checking whether file '${putative_gridFilename}' exists already"
     if [ ! -e "${putative_gridFilename}" ]; then
@@ -147,6 +150,7 @@ function generateRandomGrid() {
   done
   logInfo "Random grid file generated:"
   logInfo "\n$(cat "${GRID}")"
+  cp "${GRID}" "${outputDir}"
 }
 
 # Select specific files to use this run
@@ -260,9 +264,7 @@ function logFilteredHitCount() {
 # We will filter on this copy rather than on the original.
 gridBasename="$(basename "${GRID}")"
 wordsBasename="$(basename "${WORDS}")"
-datetime="$(date +"%F-%Hh%Mm%Ss")"
-mkdir -p tmp
-filteredWordsFile="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered.txt"
+filteredWordsFile="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered.txt"
 logInfo "Saving filtered words to file: ${filteredWordsFile}"
 cp "${WORDS}" "${filteredWordsFile}"
 chmod u+w "${filteredWordsFile}"
@@ -346,7 +348,7 @@ logDebug "\n$(cat "${GRID}")"
 
 # Start building the possible regexes from pairs of clues
 declare -i i j
-regexFile="${PWD}/tmp/${datetime}---${gridBasename}---regex-list.txt"
+regexFile="${outputDir}/regex-list.${gridBasename}.txt"
 touch "${regexFile}"
 logDebug "Creating regex file '${regexFile}'"
 logDebug "  For now it will just contain patterns composed from pairs of adjacent clues"
@@ -456,24 +458,51 @@ done
 logDebug "Grid file contains (reminder/for comparison):"
 logDebug "\n$(cat "${GRID}")"
 
-nextChar=""
 declare -i len=0
 declare -i pos=0
-declare -a paths=()
-declare -a allSuccessfulPaths=()
-declare -i allSuccessfulPathsI=0
+# Path objects are space-delimited strings containing 'path pathLen prefix'
+# where 'path' is a sequence of sequentially adjacent coordinates on the
+# grid that spells out the 'prefix' or length 'pathLen' for the current word
+# e.g., '112122 4 inni'
+declare -a pathObjects=()
 declare -a wordSuccessfulPaths=()
-declare -a successfulWord=()
+# Map from prefixes (of words) to string-encoded space-delimited arrays of paths
+# e.g., prefixToPathMap["inni"]="112122 42524334"
+declare -A prefixToPathMap
 function initCheckWordVars() {
-  nextChar=""
   len=${#word}
   pos=0
-  paths=()
+  pathObjects=()
   wordSuccessfulPaths=()
   wordSuccessfulPathsI=0
 }
 
+# TODO: generalize for arbitrary-length clues
 function setInitialPaths() {
+  # Check if a prefix for the current word has an entry in prefixToPathMap
+  declare -i prefixLen
+  local prefix pathList path pathLen prefix
+  # Work backwords to we can exit immediately if a hit if found
+  for prefixLen in $(seq ${len} -1 1); do
+    prefix="${word:0:${prefixLen}}"
+    pathList="${prefixToPathMap[${prefix}]:-}"
+    # TODO: investigate...how to use this to help shortcircuit searches for impossible words for the current grid
+    logDebug "Checking whether the prefix '${prefix}' has been seen before (and has valid paths)"
+    if [ -n "${pathList}" ]; then
+      logDebug "  We have indeed encountered prefix '${prefix}' before"
+      # Parse pathList into pathObjects
+      declare -i i=0
+      for path in ${pathList}; do
+        pathLen=$(( ${#path} / 2 ))
+        pathObject="${path} ${pathLen} ${prefix}"
+        logDebug "  Adding path object '${pathObject}' to the pathObjects list"
+        pathObjects[${i}]="${pathObject}"
+        i+=1
+      done
+      return
+    fi
+  done
+
   pos=0;
   local char1="${word:${pos}:1}"
   local char2="${word:${pos}:2}"
@@ -482,19 +511,27 @@ function setInitialPaths() {
   logDebug "Checking chars at position '${pos}':"
   logDebug "  char1 '${char1}'  -> '${char1_positions}'"
   logDebug "  char2 '${char2}' -> '${char2_positions}'"
-  paths=(${char1_positions} ${char2_positions})
+  pathObjects=(${char1_positions} ${char2_positions})
+  # Initialize prefixToPathMap values
+  logDebug "Initializing prefixToPathMap for '${char1}' and '${char2}'"
+  prefixToPathMap["${char1}"]=""
+  prefixToPathMap["${char2}"]=""
   i=0
   # Encode each path as "<concatenated string of clue positions> <total length thus far>"
   for char1_position in ${char1_positions}; do
-    paths[${i}]="${char1_position} 1 ${char1}"
+    prefixToPathMap["${char1}"]+=" ${char1_position}"
+    pathObjects[${i}]="${char1_position} 1 ${char1}"
     i+=1
   done
   for char2_position in ${char2_positions}; do
-    paths[${i}]="${char2_position} 2 ${char2}"
+    prefixToPathMap["${char2}"]+=" ${char2_position}"
+    pathObjects[${i}]="${char2_position} 2 ${char2}"
     i+=1
   done
-  logDebug "  Num Starting Paths: ${#paths[@]}"
-  for path in "${paths[@]}"; do
+  logDebug "  prefixToPathMap[${char1}] = '${prefixToPathMap[${char1}]}'"
+  logDebug "  prefixToPathMap[${char2}] = '${prefixToPathMap[${char2}]}'"
+  logDebug "  Num Starting Paths: ${#pathObjects[@]}"
+  for path in "${pathObjects[@]}"; do
     logDebug "    ${path}"
   done
 }
@@ -502,8 +539,7 @@ function setInitialPaths() {
 # Handle a single path object and attempt to extend using
 # clues of length N (if any).
 function extendSinglePathByCluesOfLengthN() {
-  # Extract next single-char and double-char options from $word
-  #read path pathLen prefix < <(echo "${pathObj}")
+  # Extract next N-char extension from $word
   declare ext=""
   if [ ${pathLen} -le $((len-N)) ]; then
     ext="${word:${pos}:${N}}"
@@ -511,7 +547,9 @@ function extendSinglePathByCluesOfLengthN() {
     logDebug "  There are not enough chars left in word '${word}' after '${prefix}' to extend '${N}' chars"
     return
   fi
-
+  declare newPrefix="${prefix}${ext}"
+  prefixToPathMap["${newPrefix}"]="${prefixToPathMap[${newPrefix}]:-}"
+  logDebug "Initializing (or reaffirming) prefixToPathMap for '${newPrefix}'"
   logDebug "  Checking ext '${ext}' at position '${pos}'"
   logDebug "    ${word}[${pos}:${N}] = '${ext}'"
   # Extract list (space-delimited string) of coordinates for ext
@@ -547,20 +585,26 @@ function extendSinglePathByCluesOfLengthN() {
       declare -i diffJ=$((nextPositionJ - lastUsedPositionJ))
       if [ "${diffI}" -ge -1 -a "${diffI}" -le 1 ]; then
         if [ "${diffJ}" -ge -1 -a "${diffJ}" -le 1 ]; then
-          # If all checks passed, append the extended path to newPaths array
+          # If all checks passed, append the extended path to newPathObjects array
           newPathFound=true
-          declare -i newLen=$((pathLen+1))
-          declare newPrefix="${prefix}${ext}"
-          newPath="${path}${nextPosition} ${newLen} ${newPrefix}"
-          logDebug "        Success! path extension found: '${newPath}'"
-          if [ ${newLen} -eq ${#word} ]; then
-            logDebug "          This path (len=${newLen}) completes the target word (len=${len})"
-            allSuccessfulPaths[${allSuccessfulPathsI}]="${newPath}"
-            wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPath}"
-            allSuccessfulPathsI+=1
+          declare newPath="${path}${nextPosition}"
+          declare -i newPathLen=$((pathLen+1))
+          newPathObject="${newPath} ${newPathLen} ${newPrefix}"
+          logDebug "        Success! path extension found: '${newPathObject}'"
+          # Update helper prefixToPathMap. If we are making proper use of this helper
+          # map, we should avoid any situation where a prefix or a new path repeat
+          # and so we should not need to check for redundancy.
+          # TODO: (maybe) add a debug check for redundancy
+          prefixToPathMap["${newPrefix}"]+=" ${newPath}"
+          if [ ${newPathLen} -eq ${#word} ]; then
+            logDebug "          This path (len=${newPathLen}) completes the target word (len=${len})"
+            wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPathObject}"
             wordSuccessfulPathsI+=1
+            # For now, stop at the first successful path rather than trying to find all paths
+            # CANCEL THE SHORT-CIRCUIT HERE, so we can grab all the "prefix paths"
+            #break
           else
-            newPaths[${newPathI}]="${newPath}"
+            newPathObjects[${newPathI}]="${newPathObject}"
             newPathI+=1
           fi
         fi
@@ -570,19 +614,20 @@ function extendSinglePathByCluesOfLengthN() {
       fi
     done # extend path by N chars
   fi
+  logDebug "  prefixToPathMap[${newPrefix}] = '${prefixToPathMap[${newPrefix}]}'"
 }
 
 # Loop through current path object and try extending each of them
 function extendPaths() {
-  logDebug "Attempting to extend paths:"
-  for pathObj in "${paths[@]}"; do
+  logDebug "Attempting to extend pathObjects:"
+  for pathObj in "${pathObjects[@]}"; do
     logDebug "  ${pathObj}"
   done # pathObj iteration
 
-  declare -a newPaths=()
+  declare -a newPathObjects=()
   declare -i newPathI=0
   declare -i pathLen
-  for pathObj in "${paths[@]}"; do
+  for pathObj in "${pathObjects[@]}"; do
     # Parse path object
     read path pathLen prefix < <(echo "${pathObj}")
     pos=${pathLen}
@@ -592,17 +637,17 @@ function extendPaths() {
     done
     logDebug "\n"
   done # pathObj iteration
-  # Now replace $paths from $newPaths
-  paths=()
+  # Now replace $pathObjects from $newPathObjects
+  pathObjects=()
   declare -i i=0
-  for newPath in "${newPaths[@]}"; do
-    paths[i]="${newPath}"
+  for newPathObject in "${newPathObjects[@]}"; do
+    pathObjects[i]="${newPathObject}"
     i+=1
   done
 
-  # Log ending set of paths
-  logDebug "Set of paths after this extension attempt:"
-  for pathObj in "${paths[@]}"; do
+  # Log ending set of pathObjects
+  logDebug "Set of pathObjects after this extension attempt:"
+  for pathObj in "${pathObjects[@]}"; do
     logDebug "  ${pathObj}"
   done # pathObj iteration
   logDebug "\n"
@@ -613,7 +658,7 @@ function checkWordAgainstGrid() {
   initCheckWordVars
   setInitialPaths
   logDebug "\n"
-  while [ ${#paths[@]} -gt 0 ]; do
+  while [ ${#pathObjects[@]} -gt 0 ]; do
     extendPaths
   done
   declare -i numWordSuccessfulPaths=${#wordSuccessfulPaths[@]};
@@ -625,7 +670,6 @@ function checkWordAgainstGrid() {
     logDebug "FAILURE - no paths found for word '${word}'"
   fi
   logDebug
-  #sleep 3
 }
 
 # Loop over words (lines) in words files
@@ -656,11 +700,14 @@ function scoreWordsFile() {
     logInfo "${outStr}"
     score+=${inc}
   done
+  scoreString="$(printf "%4d points total" "${score}")"
   logInfo
-  logInfo "  ${score} points total"
+  logInfo "  ${scoreString}"
+  logScore "  ${scoreString}"
+  #logScore "  ${scoreString} (${filteredWordsFile})"
 }
 
-echo
+logInfo
 logInfo "Done"
 logInfo "Final results available in file"
 logInfo "  ${filteredWordsFile}"
