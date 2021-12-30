@@ -464,6 +464,7 @@ declare -a allSuccessfulPaths=()
 declare -i allSuccessfulPathsI=0
 declare -a wordSuccessfulPaths=()
 declare -a successfulWord=()
+declare -i wordSuccessfulPathsI
 function initCheckWordVars() {
   nextChar=""
   len=${#word}
