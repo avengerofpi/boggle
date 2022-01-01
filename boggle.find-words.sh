@@ -459,13 +459,13 @@ logDebug "\n$(cat "${GRID}")"
 
 declare -i len=0
 declare -i pos=0
-declare -a paths=()
+declare -a pathObjects=()
 declare -a wordSuccessfulPaths=()
 declare -i wordSuccessfulPathsI
 function initCheckWordVars() {
   len=${#word}
   pos=0
-  paths=()
+  pathObjects=()
   wordSuccessfulPaths=()
   wordSuccessfulPathsI=0
 }
@@ -479,19 +479,19 @@ function setInitialPaths() {
   logDebug "Checking chars at position '${pos}':"
   logDebug "  char1 '${char1}'  -> '${char1_positions}'"
   logDebug "  char2 '${char2}' -> '${char2_positions}'"
-  paths=(${char1_positions} ${char2_positions})
+  pathObjects=(${char1_positions} ${char2_positions})
   i=0
   # Encode each path as "<concatenated string of clue positions> <total length thus far>"
   for char1_position in ${char1_positions}; do
-    paths[${i}]="${char1_position} 1 ${char1}"
+    pathObjects[${i}]="${char1_position} 1 ${char1}"
     i+=1
   done
   for char2_position in ${char2_positions}; do
-    paths[${i}]="${char2_position} 2 ${char2}"
+    pathObjects[${i}]="${char2_position} 2 ${char2}"
     i+=1
   done
-  logDebug "  Num Starting Paths: ${#paths[@]}"
-  for path in "${paths[@]}"; do
+  logDebug "  Num Starting Paths: ${#pathObjects[@]}"
+  for path in "${pathObjects[@]}"; do
     logDebug "    ${path}"
   done
 }
@@ -543,7 +543,7 @@ function extendSinglePathByCluesOfLengthN() {
       declare -i diffJ=$((nextPositionJ - lastUsedPositionJ))
       if [ "${diffI}" -ge -1 -a "${diffI}" -le 1 ]; then
         if [ "${diffJ}" -ge -1 -a "${diffJ}" -le 1 ]; then
-          # If all checks passed, append the extended path to newPaths array
+          # If all checks passed, append the extended path to newPathObjects array
           newPathFound=true
           declare -i newLen=$((pathLen+1))
           declare newPrefix="${prefix}${ext}"
@@ -554,7 +554,7 @@ function extendSinglePathByCluesOfLengthN() {
             wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPath}"
             wordSuccessfulPathsI+=1
           else
-            newPaths[${newPathI}]="${newPath}"
+            newPathObjects[${newPathI}]="${newPathObject}"
             newPathI+=1
           fi
         fi
@@ -568,15 +568,15 @@ function extendSinglePathByCluesOfLengthN() {
 
 # Loop through current path object and try extending each of them
 function extendPaths() {
-  logDebug "Attempting to extend paths:"
-  for pathObj in "${paths[@]}"; do
+  logDebug "Attempting to extend pathObjects:"
+  for pathObj in "${pathObjects[@]}"; do
     logDebug "  ${pathObj}"
   done # pathObj iteration
 
-  declare -a newPaths=()
+  declare -a newPathObjects=()
   declare -i newPathI=0
   declare -i pathLen
-  for pathObj in "${paths[@]}"; do
+  for pathObj in "${pathObjects[@]}"; do
     # Parse path object
     read path pathLen prefix < <(echo "${pathObj}")
     pos=${pathLen}
@@ -586,17 +586,17 @@ function extendPaths() {
     done
     logDebug "\n"
   done # pathObj iteration
-  # Now replace $paths from $newPaths
-  paths=()
+  # Now replace $pathObjects from $newPathObjects
+  pathObjects=()
   declare -i i=0
-  for newPath in "${newPaths[@]}"; do
-    paths[i]="${newPath}"
+  for newPathObject in "${newPathObjects[@]}"; do
+    pathObjects[i]="${newPathObject}"
     i+=1
   done
 
-  # Log ending set of paths
-  logDebug "Set of paths after this extension attempt:"
-  for pathObj in "${paths[@]}"; do
+  # Log ending set of pathObjects
+  logDebug "Set of pathObjects after this extension attempt:"
+  for pathObj in "${pathObjects[@]}"; do
     logDebug "  ${pathObj}"
   done # pathObj iteration
   logDebug "\n"
@@ -607,7 +607,7 @@ function checkWordAgainstGrid() {
   initCheckWordVars
   setInitialPaths
   logDebug "\n"
-  while [ ${#paths[@]} -gt 0 ]; do
+  while [ ${#pathObjects[@]} -gt 0 ]; do
     extendPaths
   done
   declare -i numWordSuccessfulPaths=${#wordSuccessfulPaths[@]};
