@@ -477,6 +477,7 @@ function initCheckWordVars() {
   wordSuccessfulPathsI=0
 }
 
+# TODO: generalize for arbitrary-length clues
 function setInitialPaths() {
   # Check if a prefix for the current word has an entry in prefixToPathMap
   declare -i prefixLen
@@ -485,6 +486,7 @@ function setInitialPaths() {
   for prefixLen in $(seq ${len} -1 1); do
     prefix="${word:0:${prefixLen}}"
     pathList="${prefixToPathMap[${prefix}]:-}"
+    # TODO: investigate...how to use this to help shortcircuit searches for impossible words for the current grid
     logDebug "Checking whether the prefix '${prefix}' has been seen before (and has valid paths)"
     if [ -n "${pathList}" ]; then
       logDebug "  We have indeed encountered prefix '${prefix}' before"
@@ -593,12 +595,16 @@ function extendSinglePathByCluesOfLengthN() {
           # Update helper prefixToPathMap. If we are making proper use of this helper
           # map, we should avoid any situation where a prefix or a new path repeat
           # and so we should not need to check for redundancy.
+          # TODO: (maybe) add a debug check for redundancy
           prefixToPathMap["${newPrefix}"]+=" ${newPath}"
           if [ ${newPathLen} -eq ${#word} ]; then
             logDebug "          This path (len=${newPathLen}) completes the target word (len=${len})"
             logDebug "          Appending wordSuccessfulPaths[${wordSuccessfulPathsI}]=${newPathObject}"
             wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPathObject}"
             wordSuccessfulPathsI+=1
+            # For now, stop at the first successful path rather than trying to find all paths
+            # CANCEL THE SHORT-CIRCUIT HERE, so we can grab all the "prefix paths"
+            #break
           else
             newPathObjects[${newPathI}]="${newPathObject}"
             newPathI+=1
