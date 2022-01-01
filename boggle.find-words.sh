@@ -702,8 +702,10 @@ function scoreWordsFile() {
     logInfo "${outStr}"
     score+=${inc}
   done
+  scoreString="$(printf "%4d points total" "${score}")"
   logInfo
-  logScore "  ${score} points total"
+  logInfo "  ${scoreString} $(basename "${filteredWordsFile}")"
+  logScore "  ${scoreString}"
 }
 
 logInfo
