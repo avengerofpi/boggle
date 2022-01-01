@@ -8,7 +8,7 @@ set -eu
     info=true;
     warn=true;
    error=true;
-critical=true;
+scoreLog=true;
 
 # Coloration
 TPUT_RESET="$(tput sgr0)";
@@ -36,16 +36,14 @@ YELLOW_BG="$(tput setab 3)";
     INFO_COLOR="${BRIGHT_YELLOW_FG}";
     WARN_COLOR="${BRIGHT_PURPLE_FG}";
    ERROR_COLOR="${BRIGHT_RED_FG}";
-CRITICAL_COLOR="${YELLOW_BG}${BRIGHT_RED_FG}";
-  HEADER_COLOR="${YELLOW_BG}${BRIGHT_RED}";
+   SCORE_COLOR="${YELLOW_BG}${BRIGHT_RED_FG}";
 
 # Logging functions
 function logDebug()    { if $debug;     then echo -e "${DEBUG_COLOR}DEBUG:"       "${@}${TPUT_RESET}"; fi; }
 function logInfo()     { if $info;      then echo -e "${INFO_COLOR}INFO:"         "${@}${TPUT_RESET}"; fi; }
 function logWarn()     { if $warn;      then echo -e "${WARN_COLOR}WARN:"         "${@}${TPUT_RESET}"; fi; }
 function logError()    { if $error;     then echo -e "${ERROR_COLOR}ERROR:"       "${@}${TPUT_RESET}"; fi; }
-function logCritical() { if $critical;  then echo -e "${CRITICAL_COLOR}CRITICAL:" "${@}${TPUT_RESET}"; fi; }
-function logHeader()   {                     echo -e "${HEADER_COLOR}"            "${@}${TPUT_RESET}"; }
+function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR}SCORE:"       "${@}${TPUT_RESET}"; fi; }
 
 # Declare some files for later selection
 GRID_FILES=(
@@ -658,7 +656,7 @@ function scoreWordsFile() {
     score+=${inc}
   done
   logInfo
-  logInfo "  ${score} points total"
+  logScore "  ${score} points total"
 }
 
 echo
