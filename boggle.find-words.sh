@@ -158,7 +158,6 @@ WORDS_PROMPT="Choose the words file to use: "
 # Select grid file
 if [ -z "${GRID}" ]; then
   if ${randomFiles}; then
-    #GRID="$(for f in "${GRID_FILES[@]}"; do echo "${f}"; done | shuf | head -1)"
     generateRandomGrid
   else
     PS3="${GRID_PROMPT}"
@@ -458,17 +457,12 @@ done
 logDebug "Grid file contains (reminder/for comparison):"
 logDebug "\n$(cat "${GRID}")"
 
-nextChar=""
 declare -i len=0
 declare -i pos=0
 declare -a paths=()
-declare -a allSuccessfulPaths=()
-declare -i allSuccessfulPathsI=0
 declare -a wordSuccessfulPaths=()
-declare -a successfulWord=()
 declare -i wordSuccessfulPathsI
 function initCheckWordVars() {
-  nextChar=""
   len=${#word}
   pos=0
   paths=()
@@ -505,8 +499,7 @@ function setInitialPaths() {
 # Handle a single path object and attempt to extend using
 # clues of length N (if any).
 function extendSinglePathByCluesOfLengthN() {
-  # Extract next single-char and double-char options from $word
-  #read path pathLen prefix < <(echo "${pathObj}")
+  # Extract next N-char extension from $word
   declare ext=""
   if [ ${pathLen} -le $((len-N)) ]; then
     ext="${word:${pos}:${N}}"
@@ -558,9 +551,7 @@ function extendSinglePathByCluesOfLengthN() {
           logDebug "        Success! path extension found: '${newPath}'"
           if [ ${newLen} -eq ${#word} ]; then
             logDebug "          This path (len=${newLen}) completes the target word (len=${len})"
-            allSuccessfulPaths[${allSuccessfulPathsI}]="${newPath}"
             wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPath}"
-            allSuccessfulPathsI+=1
             wordSuccessfulPathsI+=1
           else
             newPaths[${newPathI}]="${newPath}"
@@ -628,7 +619,6 @@ function checkWordAgainstGrid() {
     logDebug "FAILURE - no paths found for word '${word}'"
   fi
   logDebug
-  #sleep 3
 }
 
 # Loop over words (lines) in words files
@@ -663,7 +653,7 @@ function scoreWordsFile() {
   logScore "  ${score} points total"
 }
 
-echo
+logInfo
 logInfo "Done"
 logInfo "Final results available in file"
 logInfo "  ${filteredWordsFile}"
