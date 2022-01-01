@@ -459,8 +459,15 @@ logDebug "\n$(cat "${GRID}")"
 
 declare -i len=0
 declare -i pos=0
+# Path objects are space-delimited strings containing 'path pathLen prefix'
+# where 'path' is a sequence of sequentially adjacent coordinates on the
+# grid that spells out the 'prefix' or length 'pathLen' for the current word
+# e.g., '112122 4 inni'
 declare -a pathObjects=()
 declare -a wordSuccessfulPaths=()
+# Map from prefixes (of words) to string-encoded space-delimited arrays of paths
+# e.g., prefixToPathMap["inni"]="112122 42524334"
+declare -A prefixToPathMap
 declare -i wordSuccessfulPathsI
 function initCheckWordVars() {
   len=${#word}
@@ -471,6 +478,29 @@ function initCheckWordVars() {
 }
 
 function setInitialPaths() {
+  # Check if a prefix for the current word has an entry in prefixToPathMap
+  declare -i prefixLen
+  local prefix pathList path pathLen prefix
+  # Work backwords to we can exit immediately if a hit if found
+  for prefixLen in $(seq ${len} -1 1); do
+    prefix="${word:0:${prefixLen}}"
+    pathList="${prefixToPathMap[${prefix}]:-}"
+    logDebug "Checking whether the prefix '${prefix}' has been seen before (and has valid paths)"
+    if [ -n "${pathList}" ]; then
+      logDebug "  We have indeed encountered prefix '${prefix}' before"
+      # Parse pathList into pathObjects
+      declare -i i=0
+      for path in ${pathList}; do
+        pathLen=$(( ${#path} / 2 ))
+        pathObject="${path} ${pathLen} ${prefix}"
+        logDebug "  Adding path object '${pathObject}' to the pathObjects list"
+        pathObjects[${i}]="${pathObject}"
+        i+=1
+      done
+      return
+    fi
+  done
+
   pos=0;
   local char1="${word:${pos}:1}"
   local char2="${word:${pos}:2}"
@@ -480,16 +510,24 @@ function setInitialPaths() {
   logDebug "  char1 '${char1}'  -> '${char1_positions}'"
   logDebug "  char2 '${char2}' -> '${char2_positions}'"
   pathObjects=(${char1_positions} ${char2_positions})
+  # Initialize prefixToPathMap values
+  logDebug "Initializing prefixToPathMap for '${char1}' and '${char2}'"
+  prefixToPathMap["${char1}"]=""
+  prefixToPathMap["${char2}"]=""
   i=0
   # Encode each path as "<concatenated string of clue positions> <total length thus far>"
   for char1_position in ${char1_positions}; do
+    prefixToPathMap["${char1}"]+=" ${char1_position}"
     pathObjects[${i}]="${char1_position} 1 ${char1}"
     i+=1
   done
   for char2_position in ${char2_positions}; do
+    prefixToPathMap["${char2}"]+=" ${char2_position}"
     pathObjects[${i}]="${char2_position} 2 ${char2}"
     i+=1
   done
+  logDebug "  prefixToPathMap[${char1}] = '${prefixToPathMap[${char1}]}'"
+  logDebug "  prefixToPathMap[${char2}] = '${prefixToPathMap[${char2}]}'"
   logDebug "  Num Starting Paths: ${#pathObjects[@]}"
   for path in "${pathObjects[@]}"; do
     logDebug "    ${path}"
@@ -508,6 +546,9 @@ function extendSinglePathByCluesOfLengthN() {
     return
   fi
 
+  declare newPrefix="${prefix}${ext}"
+  prefixToPathMap["${newPrefix}"]="${prefixToPathMap[${newPrefix}]:-}"
+  logDebug "Initializing (or reaffirming) prefixToPathMap for '${newPrefix}'"
   logDebug "  Checking ext '${ext}' at position '${pos}'"
   logDebug "    ${word}[${pos}:${N}] = '${ext}'"
   # Extract list (space-delimited string) of coordinates for ext
@@ -545,13 +586,18 @@ function extendSinglePathByCluesOfLengthN() {
         if [ "${diffJ}" -ge -1 -a "${diffJ}" -le 1 ]; then
           # If all checks passed, append the extended path to newPathObjects array
           newPathFound=true
-          declare -i newLen=$((pathLen+1))
-          declare newPrefix="${prefix}${ext}"
-          newPath="${path}${nextPosition} ${newLen} ${newPrefix}"
-          logDebug "        Success! path extension found: '${newPath}'"
-          if [ ${newLen} -eq ${#word} ]; then
-            logDebug "          This path (len=${newLen}) completes the target word (len=${len})"
-            wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPath}"
+          declare newPath="${path}${nextPosition}"
+          declare -i newPathLen=$((pathLen+1))
+          newPathObject="${newPath} ${newPathLen} ${newPrefix}"
+          logDebug "        Success! path extension found: '${newPathObject}'"
+          # Update helper prefixToPathMap. If we are making proper use of this helper
+          # map, we should avoid any situation where a prefix or a new path repeat
+          # and so we should not need to check for redundancy.
+          prefixToPathMap["${newPrefix}"]+=" ${newPath}"
+          if [ ${newPathLen} -eq ${#word} ]; then
+            logDebug "          This path (len=${newPathLen}) completes the target word (len=${len})"
+            logDebug "          Appending wordSuccessfulPaths[${wordSuccessfulPathsI}]=${newPathObject}"
+            wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPathObject}"
             wordSuccessfulPathsI+=1
           else
             newPathObjects[${newPathI}]="${newPathObject}"
@@ -564,6 +610,7 @@ function extendSinglePathByCluesOfLengthN() {
       fi
     done # extend path by N chars
   fi
+  logDebug "  prefixToPathMap[${newPrefix}] = '${prefixToPathMap[${newPrefix}]}'"
 }
 
 # Loop through current path object and try extending each of them
