@@ -3,6 +3,11 @@
 # Exit on errors. Undefined vars count as errors.
 set -eu
 
+# Output setup
+datetime="$(date +"%F-%Hh%Mm%Ss")"
+outputDir="${PWD}/tmp/${datetime}"
+mkdir -p "${outputDir}"
+
 # Logging levels
    debug=false;
     info=true;
@@ -115,11 +120,11 @@ function generateRandomGrid() {
   declare -i idx
   randomGridRootDir="${PWD}/data/grids/random"
   mkdir -p "${randomGridRootDir}"
-  randomGridFilenameBasename="random-boggle-grid.%03d.txt"
+  randomGridFilenameBasename="random-boggle-grid.%05d.txt"
   randomGridFilenameFormatStr="${randomGridRootDir}/${randomGridFilenameBasename}"
   logDebug "Generating a new, random grid file"
   logDebug "  Using dice file '${BOGGLE_DICE_TXT}'"
-  for idx in {0..999}; do
+  for idx in {0..99999}; do
     putative_gridFilename="$(printf "${randomGridFilenameFormatStr}" "${idx}")"
     logDebug "Checking whether file '${putative_gridFilename}' exists already"
     if [ ! -e "${putative_gridFilename}" ]; then
@@ -166,6 +171,7 @@ if [ -z "${GRID}" ]; then
     done
   fi
 fi
+cp "${GRID}" "${outputDir}"
 # Select words file
 if [ -z "${WORDS}" ]; then
   if ${randomFiles}; then
@@ -258,9 +264,7 @@ function logFilteredHitCount() {
 # We will filter on this copy rather than on the original.
 gridBasename="$(basename "${GRID}")"
 wordsBasename="$(basename "${WORDS}")"
-datetime="$(date +"%F-%Hh%Mm%Ss")"
-mkdir -p tmp
-filteredWordsFile="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered.txt"
+filteredWordsFile="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered.txt"
 logInfo "Saving filtered words to file: ${filteredWordsFile}"
 cp "${WORDS}" "${filteredWordsFile}"
 chmod u+w "${filteredWordsFile}"
@@ -344,7 +348,7 @@ logDebug "\n$(cat "${GRID}")"
 
 # Start building the possible regexes from pairs of clues
 declare -i i j
-regexFile="${PWD}/tmp/${datetime}---${gridBasename}---regex-list.txt"
+regexFile="${outputDir}/regex-list.${gridBasename}.txt"
 touch "${regexFile}"
 logDebug "Creating regex file '${regexFile}'"
 logDebug "  For now it will just contain patterns composed from pairs of adjacent clues"
