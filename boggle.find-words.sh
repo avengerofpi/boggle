@@ -5,9 +5,9 @@ set -eu
 
 # Output setup
 function setupOutputDir() {
-datetime="$(date +"%F-%Hh%Mm%Ss")"
-outputDir="${PWD}/tmp/${datetime}"
-mkdir -p "${outputDir}"
+  datetime="$(date +"%F-%Hh%Mm%Ss")"
+  outputDir="${PWD}/tmp/${datetime}"
+  mkdir -p "${outputDir}"
 }
 
 # Logging levels
@@ -54,15 +54,15 @@ function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR}SCORE:"     
 
 # Declare some files for later selection
 function selectDefaultFileOptionLists() {
-GRID_FILES=(
-  ${PWD}/data/grids/*.txt
-)
+  GRID_FILES=(
+    ${PWD}/data/grids/*.txt
+  )
 
-WORD_FILES=(
-  ${PWD}/data/words/*.words
-)
+  WORD_FILES=(
+    ${PWD}/data/words/*.words
+  )
 
-BOGGLE_DICE_TXT="${PWD}/data/dice/sample-boggle-dice.txt"
+  BOGGLE_DICE_TXT="${PWD}/data/dice/sample-boggle-dice.txt"
 }
 
 # Add argument parsing
@@ -70,44 +70,44 @@ BOGGLE_DICE_TXT="${PWD}/data/dice/sample-boggle-dice.txt"
 declare randomFiles=false
 declare GRID="" WORDS=""
 function parseArgs() {
-while (( "$#" )); do
-  case "$1" in
-    -g|--grid-file)
-      if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-        GRID="$2"
-        logDebug "Choosing GRID file '${GRID}'"
-        shift 2
-      else
-        echo "Error: Argument for $1 is missing" >&2
+  while (( "$#" )); do
+    case "$1" in
+      -g|--grid-file)
+        if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+          GRID="$2"
+          logDebug "Choosing GRID file '${GRID}'"
+          shift 2
+        else
+          echo "Error: Argument for $1 is missing" >&2
+          exit 1
+        fi
+        ;;
+      -w|--words-file)
+        if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+          WORDS="$2"
+          logDebug "Choosing WORDS file '${WORDS}'"
+          shift 2
+        else
+          echo "Error: Argument for $1 is missing" >&2
+          exit 1
+        fi
+        ;;
+      -r|--random-files)
+        randomFiles=true
+        logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
+        shift 1
+        ;;
+      -*|--*=) # unsupported flags
+        echo "Error: Unsupported flag $1" >&2
         exit 1
-      fi
-      ;;
-    -w|--words-file)
-      if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-        WORDS="$2"
-        logDebug "Choosing WORDS file '${WORDS}'"
-        shift 2
-      else
-        echo "Error: Argument for $1 is missing" >&2
-        exit 1
-      fi
-      ;;
-    -r|--random-files)
-      randomFiles=true
-      logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
-      shift 1
-      ;;
-    -*|--*=) # unsupported flags
-      echo "Error: Unsupported flag $1" >&2
-      exit 1
-      ;;
-    *) # positional parameters - unsupported
-      logError "Encountered a positional param, but no positional params are supported"
-      exit 2
-      #shift
-      ;;
-  esac
-done
+        ;;
+      *) # positional parameters - unsupported
+        logError "Encountered a positional param, but no positional params are supported"
+        exit 2
+        #shift
+        ;;
+    esac
+  done
 }
 
 # Generate a random boggle board from the selected dice config file
@@ -156,41 +156,41 @@ function generateRandomGrid() {
 
 # Select specific files to use this run
 function promptUserForGridAndWordFiles() {
-GRID_PROMPT="Choose the grid file to use: "
-WORDS_PROMPT="Choose the words file to use: "
-# Select grid file
-if [ -z "${GRID}" ]; then
-  if ${randomFiles}; then
-    generateRandomGrid
-  else
-    PS3="${GRID_PROMPT}"
-    select GRID in "${GRID_FILES[@]}"; do
-      if [ -n "${GRID}" ]; then
-        break
-      else
-        echo "Try again. Focus!"
-      fi
-    done
+  GRID_PROMPT="Choose the grid file to use: "
+  WORDS_PROMPT="Choose the words file to use: "
+  # Select grid file
+  if [ -z "${GRID}" ]; then
+    if ${randomFiles}; then
+      generateRandomGrid
+    else
+      PS3="${GRID_PROMPT}"
+      select GRID in "${GRID_FILES[@]}"; do
+        if [ -n "${GRID}" ]; then
+          break
+        else
+          echo "Try again. Focus!"
+        fi
+      done
+    fi
   fi
-fi
-cp "${GRID}" "${outputDir}"
-# Select words file
-if [ -z "${WORDS}" ]; then
-  if ${randomFiles}; then
-    WORDS="$(for f in "${WORD_FILES[@]}"; do echo "${f}"; done | shuf | head -1)"
-  else
-    PS3="${WORDS_PROMPT}"
-    select WORDS in "${WORD_FILES[@]}"; do
-      if [ -n "${WORDS}" ]; then
-        break
-      else
-        echo "Try again. Focus!"
-      fi
-    done
+  cp "${GRID}" "${outputDir}"
+  # Select words file
+  if [ -z "${WORDS}" ]; then
+    if ${randomFiles}; then
+      WORDS="$(for f in "${WORD_FILES[@]}"; do echo "${f}"; done | shuf | head -1)"
+    else
+      PS3="${WORDS_PROMPT}"
+      select WORDS in "${WORD_FILES[@]}"; do
+        if [ -n "${WORDS}" ]; then
+          break
+        else
+          echo "Try again. Focus!"
+        fi
+      done
+    fi
   fi
-fi
-logInfo "Selected grid  file '${GRID}'"
-logInfo "Selected words file '${WORDS}'"
+  logInfo "Selected grid  file '${GRID}'"
+  logInfo "Selected words file '${WORDS}'"
 }
 
 # Exit codes and handling (to be OR'd together ('|'))
@@ -213,49 +213,49 @@ function checkExitCode() {
 
 # Verify chosen files exist
 function validateFiles() {
-if [ ! -f "${GRID}" ]; then
-  logError "ERROR: Boggle grid file '${GRID}' does not exist"
-  exitCode=$((exitCode | FILE_MISSING))
-elif [ ! -r "${GRID}" ]; then
-  logError "ERROR: Boggle grid file '${GRID}' exists but it cannot be read"
-  exitCode=$((exitCode | FILE_UNREADABLE))
-fi
+  if [ ! -f "${GRID}" ]; then
+    logError "ERROR: Boggle grid file '${GRID}' does not exist"
+    exitCode=$((exitCode | FILE_MISSING))
+  elif [ ! -r "${GRID}" ]; then
+    logError "ERROR: Boggle grid file '${GRID}' exists but it cannot be read"
+    exitCode=$((exitCode | FILE_UNREADABLE))
+  fi
 
-if [ ! -f "${WORDS}" ]; then
-  logError "ERROR: Boggle words file '${WORDS}' does not exist"
-  exitCode=$((exitCode | FILE_MISSING))
-elif [ ! -r "${WORDS}" ]; then
-  logError "ERROR: Boggle words file '${WORDS}' exists but it cannot be read"
-  exitCode=$((exitCode | FILE_UNREADABLE))
-fi
-checkExitCode
+  if [ ! -f "${WORDS}" ]; then
+    logError "ERROR: Boggle words file '${WORDS}' does not exist"
+    exitCode=$((exitCode | FILE_MISSING))
+  elif [ ! -r "${WORDS}" ]; then
+    logError "ERROR: Boggle words file '${WORDS}' exists but it cannot be read"
+    exitCode=$((exitCode | FILE_UNREADABLE))
+  fi
+  checkExitCode
 
-# Validate number of lines in grid files
-declare -i EXPECTED_NUM_LINES=5
-declare -i numLines=$(wc "${GRID}" | awk '{print $1}')
-if [ ${numLines} -ne ${EXPECTED_NUM_LINES} ]; then
-  logError "Incorrect number of lines found in grid file."
-  logError "  Found '${numLines}' lines but should have found '${EXPECTED_NUM_LINES}' lines"
-  exitCode=$((exitCode | INVALID_GRID_FILE))
-fi
+  # Validate number of lines in grid files
+  declare -i EXPECTED_NUM_LINES=5
+  declare -i numLines=$(wc "${GRID}" | awk '{print $1}')
+  if [ ${numLines} -ne ${EXPECTED_NUM_LINES} ]; then
+    logError "Incorrect number of lines found in grid file."
+    logError "  Found '${numLines}' lines but should have found '${EXPECTED_NUM_LINES}' lines"
+    exitCode=$((exitCode | INVALID_GRID_FILE))
+  fi
 
-# Verify each line looks correct (eactly 5 non-empty alphabetical clues)
-gridLinePattern="^[a-z]+( [a-z]+){4}+\$"
-# Avoid grep error
-set +e
-gridAntiMatch="$(egrep -nv "${gridLinePattern}" "${GRID}")"
-if [ $? -eq 2 ]; then
-  logError "There was an error with the grep command just run"
-  exitCode=$((exitCode | GREP_ERROR))
-fi
-set -e
-if [ -n "${gridAntiMatch}" ]; then
-  logError "One or more lines of the grid file looks incorrect."
-  logError "  All lines should match the regex '${gridLinePattern}' but we found the following lines (maybe truncated):"
-  logError "\n$(echo "${gridAntiMatch}" | head)"
-  exitCode=$((exitCode | INVALID_GRID_FILE))
-fi
-checkExitCode
+  # Verify each line looks correct (eactly 5 non-empty alphabetical clues)
+  gridLinePattern="^[a-z]+( [a-z]+){4}+\$"
+  # Avoid grep error
+  set +e
+  gridAntiMatch="$(egrep -nv "${gridLinePattern}" "${GRID}")"
+  if [ $? -eq 2 ]; then
+    logError "There was an error with the grep command just run"
+    exitCode=$((exitCode | GREP_ERROR))
+  fi
+  set -e
+  if [ -n "${gridAntiMatch}" ]; then
+    logError "One or more lines of the grid file looks incorrect."
+    logError "  All lines should match the regex '${gridLinePattern}' but we found the following lines (maybe truncated):"
+    logError "\n$(echo "${gridAntiMatch}" | head)"
+    exitCode=$((exitCode | INVALID_GRID_FILE))
+  fi
+  checkExitCode
 }
 
 # Start fast filtering of words file
@@ -269,13 +269,13 @@ function logFilteredHitCount() {
 # We will filter on this copy rather than on the original.
 declare filteredWordsFile=""
 function createInitialFilteredWordsFile() {
-gridBasename="$(basename "${GRID}")"
-wordsBasename="$(basename "${WORDS}")"
-filteredWordsFile="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered.txt"
-logInfo "Saving filtered words to file: ${filteredWordsFile}"
-cp "${WORDS}" "${filteredWordsFile}"
-chmod u+w "${filteredWordsFile}"
-logFilteredHitCount
+  gridBasename="$(basename "${GRID}")"
+  wordsBasename="$(basename "${WORDS}")"
+  filteredWordsFile="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered.txt"
+  logInfo "Saving filtered words to file: ${filteredWordsFile}"
+  cp "${WORDS}" "${filteredWordsFile}"
+  chmod u+w "${filteredWordsFile}"
+  logFilteredHitCount
 }
 
 # Add a pattern to filter out hits with too many of any char (or multi-char)
@@ -285,53 +285,53 @@ logFilteredHitCount
 # 'i' and 'n', then it may be possible (depending on the actual grid) for 'in'
 # to occur more than once.
 function performClueCountsFiltering() {
-declare -A clueCnts
-for c in {a..z}; do
-  clueCnts["${c}"]="0";
-done
-# In order to udpate the array clueCnts from within the while loop, use process
-# substitution instead of a pipeline
-# https://stackoverflow.com/questions/9985076/bash-populate-an-array-in-loop
-#   "Every command in a pipeline receives a copy of the shell's execution
-#     environment, so a while loop would populate a copy of the array, and when
-#     the while loop completes, that copy disappears"
-while read cnt clue; do
-  logDebug "Found clue '${clue}' (cnt: '${cnt}')"
-  clueCnts["${clue}"]="${cnt}"
-done < <(sed -e 's@\(\<[a-z]\)@\n\1@g' -e 's@ @\n@g' "${GRID}" | grep '[a-z]' | sort | uniq -c)
+  declare -A clueCnts
+  for c in {a..z}; do
+    clueCnts["${c}"]="0";
+  done
+  # In order to udpate the array clueCnts from within the while loop, use process
+  # substitution instead of a pipeline
+  # https://stackoverflow.com/questions/9985076/bash-populate-an-array-in-loop
+  #   "Every command in a pipeline receives a copy of the shell's execution
+  #     environment, so a while loop would populate a copy of the array, and when
+  #     the while loop completes, that copy disappears"
+  while read cnt clue; do
+    logDebug "Found clue '${clue}' (cnt: '${cnt}')"
+    clueCnts["${clue}"]="${cnt}"
+  done < <(sed -e 's@\(\<[a-z]\)@\n\1@g' -e 's@ @\n@g' "${GRID}" | grep '[a-z]' | sort | uniq -c)
 
-logDebug "clues:  '${!clueCnts[@]}'"
-logDebug "counts: '${clueCnts[@]}'"
+  logDebug "clues:  '${!clueCnts[@]}'"
+  logDebug "counts: '${clueCnts[@]}'"
 
-# Now process each clue.
-for clue in "${!clueCnts[@]}"; do
-  clueCnt="${clueCnts[${clue}]}"
-  logDebug "Checking for too many hits against clue '${clue}' (cnt: '${clueCnt}')"
-  # If clue is multi-char, check the individual chars cnts in case they all occur individually
-  # Note that if I were to properly handle multi-char clues, I'd need to check all sub-stings.
-  declare -i clueLen="${#clue}"
-  declare -i maxExtraHits=0
-  if [ "${clueLen}" -gt 1 ]; then
-    logDebug "  This is a multi-char clue, it has '${clueLen}' chars"
-    for i in $(seq 0 $((clueLen - 1))); do
-      c="${clue:${i}:1}"
-      declare -i cCnt="${clueCnts[${c}]}"
-      logDebug "  Inspecting embedded char '${c}' (cnt: '${cCnt}')"
-      if [ ${cCnt} -lt ${maxExtraHits} -o ${maxExtraHits} -eq 0 ]; then
-        maxExtraHits=${cCnt}
-        logDebug "    Updating maxExtraHits to '${maxExtraHits}'"
-      fi
-    done
-  fi
-  declare -i maxHits=${clueCnt}+${maxExtraHits}
-  declare -i excessiveHits=${maxHits}+1
-  logDebug "  maxHits: '${maxHits}'"
-  checkPattern="^\(.*${clue}\)\{${excessiveHits},\}"
-  logDebug "checkPattern: '${checkPattern}'"
-  sed -i -e "/${checkPattern}/d" "${filteredWordsFile}"
-done
-logDebug "Second pass filter ensuring no char/clue occurs too many times"
-logFilteredHitCount
+  # Now process each clue.
+  for clue in "${!clueCnts[@]}"; do
+    clueCnt="${clueCnts[${clue}]}"
+    logDebug "Checking for too many hits against clue '${clue}' (cnt: '${clueCnt}')"
+    # If clue is multi-char, check the individual chars cnts in case they all occur individually
+    # Note that if I were to properly handle multi-char clues, I'd need to check all sub-stings.
+    declare -i clueLen="${#clue}"
+    declare -i maxExtraHits=0
+    if [ "${clueLen}" -gt 1 ]; then
+      logDebug "  This is a multi-char clue, it has '${clueLen}' chars"
+      for i in $(seq 0 $((clueLen - 1))); do
+        c="${clue:${i}:1}"
+        declare -i cCnt="${clueCnts[${c}]}"
+        logDebug "  Inspecting embedded char '${c}' (cnt: '${cCnt}')"
+        if [ ${cCnt} -lt ${maxExtraHits} -o ${maxExtraHits} -eq 0 ]; then
+          maxExtraHits=${cCnt}
+          logDebug "    Updating maxExtraHits to '${maxExtraHits}'"
+        fi
+      done
+    fi
+    declare -i maxHits=${clueCnt}+${maxExtraHits}
+    declare -i excessiveHits=${maxHits}+1
+    logDebug "  maxHits: '${maxHits}'"
+    checkPattern="^\(.*${clue}\)\{${excessiveHits},\}"
+    logDebug "checkPattern: '${checkPattern}'"
+    sed -i -e "/${checkPattern}/d" "${filteredWordsFile}"
+  done
+  logDebug "Second pass filter ensuring no char/clue occurs too many times"
+  logFilteredHitCount
 }
 
 # Now process pairs of adjacent clues.
@@ -343,95 +343,95 @@ logFilteredHitCount
 # have been verified elsewhere.
 declare filteredWordsFile2=""
 function performAdjacentCluesFiltering() {
-declare -i i=1;
-declare -A gridMap
-logDebug "Setting up 'gridMap' associative array:"
-while read i1 i2 i3 i4 i5; do
-  gridMap["${i}1"]="${i1}"
-  gridMap["${i}2"]="${i2}"
-  gridMap["${i}3"]="${i3}"
-  gridMap["${i}4"]="${i4}"
-  gridMap["${i}5"]="${i5}"
-  logDebug "${i}1=${gridMap[${i}1]} ${i}2=${gridMap[${i}2]} ${i}3=${gridMap[${i}3]} ${i}4=${gridMap[${i}4]} ${i}5=${gridMap[${i}5]}"
-  i+=1
-done < <(cat "${GRID}")
-logDebug "Grid file contains (reminder/for comparison):"
-logDebug "\n$(cat "${GRID}")"
+  declare -i i=1;
+  declare -A gridMap
+  logDebug "Setting up 'gridMap' associative array:"
+  while read i1 i2 i3 i4 i5; do
+    gridMap["${i}1"]="${i1}"
+    gridMap["${i}2"]="${i2}"
+    gridMap["${i}3"]="${i3}"
+    gridMap["${i}4"]="${i4}"
+    gridMap["${i}5"]="${i5}"
+    logDebug "${i}1=${gridMap[${i}1]} ${i}2=${gridMap[${i}2]} ${i}3=${gridMap[${i}3]} ${i}4=${gridMap[${i}4]} ${i}5=${gridMap[${i}5]}"
+    i+=1
+  done < <(cat "${GRID}")
+  logDebug "Grid file contains (reminder/for comparison):"
+  logDebug "\n$(cat "${GRID}")"
 
-# Start building the possible regexes from pairs of clues
-declare -i i j
-regexFile="${outputDir}/regex-list.${gridBasename}.txt"
-touch "${regexFile}"
-logDebug "Creating regex file '${regexFile}'"
-logDebug "  For now it will just contain patterns composed from pairs of adjacent clues"
-# Horizontal pairs
-for i in {1..5}; do
-  for j in {1..4}; do
-    a="${gridMap["$((i+0))$((j+0))"]}"
-    b="${gridMap["$((i+0))$((j+1))"]}"
-    echo "${a}${b}" >> "${regexFile}"
-    echo "${b}${a}" >> "${regexFile}"
+  # Start building the possible regexes from pairs of clues
+  declare -i i j
+  regexFile="${outputDir}/regex-list.${gridBasename}.txt"
+  touch "${regexFile}"
+  logDebug "Creating regex file '${regexFile}'"
+  logDebug "  For now it will just contain patterns composed from pairs of adjacent clues"
+  # Horizontal pairs
+  for i in {1..5}; do
+    for j in {1..4}; do
+      a="${gridMap["$((i+0))$((j+0))"]}"
+      b="${gridMap["$((i+0))$((j+1))"]}"
+      echo "${a}${b}" >> "${regexFile}"
+      echo "${b}${a}" >> "${regexFile}"
+    done
   done
-done
-# Vertical pairs
-for i in {1..4}; do
-  for j in {1..5}; do
-    a="${gridMap["$((i+0))$((j+0))"]}"
-    b="${gridMap["$((i+1))$((j+0))"]}"
-    echo "${a}${b}" >> "${regexFile}"
-    echo "${b}${a}" >> "${regexFile}"
+  # Vertical pairs
+  for i in {1..4}; do
+    for j in {1..5}; do
+      a="${gridMap["$((i+0))$((j+0))"]}"
+      b="${gridMap["$((i+1))$((j+0))"]}"
+      echo "${a}${b}" >> "${regexFile}"
+      echo "${b}${a}" >> "${regexFile}"
+    done
   done
-done
-# Forward diagonal pairs
-for i in {1..4}; do
-  for j in {1..4}; do
-    a="${gridMap["$((i+0))$((j+1))"]}"
-    b="${gridMap["$((i+1))$((j+0))"]}"
-    echo "${a}${b}" >> "${regexFile}"
-    echo "${b}${a}" >> "${regexFile}"
+  # Forward diagonal pairs
+  for i in {1..4}; do
+    for j in {1..4}; do
+      a="${gridMap["$((i+0))$((j+1))"]}"
+      b="${gridMap["$((i+1))$((j+0))"]}"
+      echo "${a}${b}" >> "${regexFile}"
+      echo "${b}${a}" >> "${regexFile}"
+    done
   done
-done
-# Backward diagonal pairs
-for i in {1..4}; do
-  for j in {1..4}; do
-    a="${gridMap["$((i+0))$((j+0))"]}"
-    b="${gridMap["$((i+1))$((j+1))"]}"
-    echo "${a}${b}" >> "${regexFile}"
-    echo "${b}${a}" >> "${regexFile}"
+  # Backward diagonal pairs
+  for i in {1..4}; do
+    for j in {1..4}; do
+      a="${gridMap["$((i+0))$((j+0))"]}"
+      b="${gridMap["$((i+1))$((j+1))"]}"
+      echo "${a}${b}" >> "${regexFile}"
+      echo "${b}${a}" >> "${regexFile}"
+    done
   done
-done
 
-# Construct regex
-# Only handles single-char and double-char clues correctly and only when exactly one double-char clue
-# occurs in the grid (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
-# generalize to clue lengths > 2 chars or to multiple double-char clues, this logic will need changing.
-singleLetterClues=$(sed -e 's@\<[a-z]\{2,\}\>@@g' -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @@g')
-singleCluePattern_1char="([${singleLetterClues}])"
-doubleCluePattern_all="($(sort "${regexFile}" |  xargs | sed -e 's@ @|@g'))"
-pattern2="^${doubleCluePattern_all}+${singleCluePattern_1char}?$"
-pattern3="^${singleCluePattern_1char}?${doubleCluePattern_all}+$"
+  # Construct regex
+  # Only handles single-char and double-char clues correctly and only when exactly one double-char clue
+  # occurs in the grid (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
+  # generalize to clue lengths > 2 chars or to multiple double-char clues, this logic will need changing.
+  singleLetterClues=$(sed -e 's@\<[a-z]\{2,\}\>@@g' -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @@g')
+  singleCluePattern_1char="([${singleLetterClues}])"
+  doubleCluePattern_all="($(sort "${regexFile}" |  xargs | sed -e 's@ @|@g'))"
+  pattern2="^${doubleCluePattern_all}+${singleCluePattern_1char}?$"
+  pattern3="^${singleCluePattern_1char}?${doubleCluePattern_all}+$"
 
-logDebug "singleLetterClues:         ${singleLetterClues}"
-logDebug "singleCluePattern_1char: ${singleCluePattern_1char}"
-logDebug "doubleCluePattern_all:   ${doubleCluePattern_all}"
-logDebug "Regex file composed from pairs of adjacent clues:"
-logDebug "\n$(cat ${regexFile})"
-logDebug "Third pass filtering applying the following patterns to words list file:"
-logDebug " '${pattern2}'"
-logDebug " '${pattern3}'"
+  logDebug "singleLetterClues:         ${singleLetterClues}"
+  logDebug "singleCluePattern_1char: ${singleCluePattern_1char}"
+  logDebug "doubleCluePattern_all:   ${doubleCluePattern_all}"
+  logDebug "Regex file composed from pairs of adjacent clues:"
+  logDebug "\n$(cat ${regexFile})"
+  logDebug "Third pass filtering applying the following patterns to words list file:"
+  logDebug " '${pattern2}'"
+  logDebug " '${pattern3}'"
 
-# Apply the new filter pattern
-filteredWordsFile2="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
-set +e
-egrep "${pattern2}" "${filteredWordsFile}" | egrep "${pattern3}" > "${filteredWordsFile2}"
-if [ $? -eq 2 ]; then
-  logError "There was an error with the grep command just run"
-  exitCode=$((exitCode | GREP_ERROR))
-fi
-checkExitCode
-set -e
-mv "${filteredWordsFile2}" "${filteredWordsFile}"
-logFilteredHitCount
+  # Apply the new filter pattern
+  filteredWordsFile2="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
+  set +e
+  egrep "${pattern2}" "${filteredWordsFile}" | egrep "${pattern3}" > "${filteredWordsFile2}"
+  if [ $? -eq 2 ]; then
+    logError "There was an error with the grep command just run"
+    exitCode=$((exitCode | GREP_ERROR))
+  fi
+  checkExitCode
+  set -e
+  mv "${filteredWordsFile2}" "${filteredWordsFile}"
+  logFilteredHitCount
 }
 
 # Switch from using regex patterns to filter down results to
@@ -446,27 +446,27 @@ declare -i i=1;
 unset gridMap
 declare -A gridMap
 function setupGridMap() {
-logDebug "Setting up 'gridMap' associative array:"
-while read i1 i2 i3 i4 i5; do
-  gridMap["${i1}"]+=" ${i}1"; gridMap["${i1}"]="${gridMap[${i1}]# }"
-  gridMap["${i2}"]+=" ${i}2"; gridMap["${i2}"]="${gridMap[${i2}]# }"
-  gridMap["${i3}"]+=" ${i}3"; gridMap["${i3}"]="${gridMap[${i3}]# }"
-  gridMap["${i4}"]+=" ${i}4"; gridMap["${i4}"]="${gridMap[${i4}]# }"
-  gridMap["${i5}"]+=" ${i}5"; gridMap["${i5}"]="${gridMap[${i5}]# }"
-  logDebug "Processed row '${i}', updating"
-  logDebug "  ${i1} -> '${gridMap[${i1}]}'"
-  logDebug "  ${i2} -> '${gridMap[${i2}]}'"
-  logDebug "  ${i3} -> '${gridMap[${i3}]}'"
-  logDebug "  ${i4} -> '${gridMap[${i4}]}'"
-  logDebug "  ${i5} -> '${gridMap[${i5}]}'"
-  i+=1
-done < <(cat "${GRID}")
-logDebug "Final gridMap contents:"
-for clue in "${!gridMap[@]}"; do
-  logDebug "  ${clue} -> '${gridMap[${clue}]}'"
-done
-logDebug "Grid file contains (reminder/for comparison):"
-logDebug "\n$(cat "${GRID}")"
+  logDebug "Setting up 'gridMap' associative array:"
+  while read i1 i2 i3 i4 i5; do
+    gridMap["${i1}"]+=" ${i}1"; gridMap["${i1}"]="${gridMap[${i1}]# }"
+    gridMap["${i2}"]+=" ${i}2"; gridMap["${i2}"]="${gridMap[${i2}]# }"
+    gridMap["${i3}"]+=" ${i}3"; gridMap["${i3}"]="${gridMap[${i3}]# }"
+    gridMap["${i4}"]+=" ${i}4"; gridMap["${i4}"]="${gridMap[${i4}]# }"
+    gridMap["${i5}"]+=" ${i}5"; gridMap["${i5}"]="${gridMap[${i5}]# }"
+    logDebug "Processed row '${i}', updating"
+    logDebug "  ${i1} -> '${gridMap[${i1}]}'"
+    logDebug "  ${i2} -> '${gridMap[${i2}]}'"
+    logDebug "  ${i3} -> '${gridMap[${i3}]}'"
+    logDebug "  ${i4} -> '${gridMap[${i4}]}'"
+    logDebug "  ${i5} -> '${gridMap[${i5}]}'"
+    i+=1
+  done < <(cat "${GRID}")
+  logDebug "Final gridMap contents:"
+  for clue in "${!gridMap[@]}"; do
+    logDebug "  ${clue} -> '${gridMap[${clue}]}'"
+  done
+  logDebug "Grid file contains (reminder/for comparison):"
+  logDebug "\n$(cat "${GRID}")"
 }
 
 declare -i len=0
@@ -689,11 +689,11 @@ function checkWordAgainstGrid() {
 # Loop over words (lines) in words files
 # Reuse filteredWordsFil2
 function performFullPathSearchFiltering() {
-touch "${filteredWordsFile2}"
-while read word; do
-  checkWordAgainstGrid
-done < <(cat "${filteredWordsFile}")
-mv "${filteredWordsFile2}" "${filteredWordsFile}"
+  touch "${filteredWordsFile2}"
+  while read word; do
+    checkWordAgainstGrid
+  done < <(cat "${filteredWordsFile}")
+  mv "${filteredWordsFile2}" "${filteredWordsFile}"
 }
 
 # Score a words file
@@ -726,11 +726,11 @@ function scoreWordsFile() {
 }
 
 function logCompletion() {
-logInfo
-logInfo "Done"
-logInfo "Final results available in file"
-logInfo "  ${filteredWordsFile}"
-logFilteredHitCount
+  logInfo
+  logInfo "Done"
+  logInfo "Final results available in file"
+  logInfo "  ${filteredWordsFile}"
+  logFilteredHitCount
 }
 
 function main() {
