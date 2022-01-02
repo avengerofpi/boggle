@@ -68,8 +68,8 @@ YELLOW_BG="$(tput setab 3)";
 
 # Logging functions
 function logDebug()    { if $debug;     then echo -e "${DEBUG_COLOR}DEBUG:"       "${@}${TPUT_RESET}"; fi; }
-function logInfo()     { if $info;      then echo -e "${INFO_COLOR}INFO:"         "${@}${TPUT_RESET}"; fi; }
-function logWarn()     { if $warn;      then echo -e "${WARN_COLOR}WARN:"         "${@}${TPUT_RESET}"; fi; }
+function logInfo()     { if $info;      then echo -e "${INFO_COLOR}INFO:  "       "${@}${TPUT_RESET}"; fi; }
+function logWarn()     { if $warn;      then echo -e "${WARN_COLOR}WARN:  "       "${@}${TPUT_RESET}"; fi; }
 function logError()    { if $error;     then echo -e "${ERROR_COLOR}ERROR:"       "${@}${TPUT_RESET}"; fi; }
 function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR}SCORE:"       "${@}${TPUT_RESET}"; fi; }
 
