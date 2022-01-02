@@ -4,10 +4,31 @@
 set -eu
 
 # Output setup
+declare -i outputDirIndex=""
+declare outputDir=""
 function setupOutputDir() {
   datetime="$(date +"%F-%Hh%Mm%Ss")"
-  outputDir="${PWD}/tmp/${datetime}"
+  baseOutputDir="${PWD}/output"
+  outputDirFormatStr="${baseOutputDir}/%05d"
+  outputDir=""
+  for outputDirIndex in {0..99999}; do
+    putative_outputDir="$(printf "${outputDirFormatStr}" "${outputDirIndex}")"
+    logDebug "Checking whether (putative) output dir '${putative_outputDir}' exists already"
+    if [ ! -e "${putative_outputDir}" ]; then
+      logDebug "  Does not exist yet. We will use '${outputDir}' as the output dir"
+      outputDir="${putative_outputDir}"
+      break;
+    fi;
+  done;
+
+  if [ -z "${outputDir}" ]; then
+    logError "Failed to choose a usable output dir."
+    exitCode=99
+  fi
+  checkExitCode
+
   mkdir -p "${outputDir}"
+  touch "${outputDir}/${datetime}.txt"
 }
 
 # Logging levels
@@ -114,29 +135,19 @@ function parseArgs() {
 function generateRandomGrid() {
   declare -a shuffledDice
   readarray -t shuffledDice < <(shuf ${BOGGLE_DICE_TXT})
-  logDebug "Dice:"
-  for die in "${shuffledDice[@]}"; do
-    logDebug "${die}";
-  done
-  # Figure out the branch name to use, if first choice is already taken
-  declare -i idx
-  randomGridRootDir="${PWD}/data/grids/random"
-  mkdir -p "${randomGridRootDir}"
-  randomGridFilenameBasename="random-boggle-grid.%05d.txt"
-  randomGridFilenameFormatStr="${randomGridRootDir}/${randomGridFilenameBasename}"
   logDebug "Generating a new, random grid file"
   logDebug "  Using dice file '${BOGGLE_DICE_TXT}'"
-  for idx in {0..99999}; do
-    putative_gridFilename="$(printf "${randomGridFilenameFormatStr}" "${idx}")"
-    logDebug "Checking whether file '${putative_gridFilename}' exists already"
-    if [ ! -e "${putative_gridFilename}" ]; then
-      GRID="${putative_gridFilename}";
-      logDebug "  File does not exist yet. We will use this filename"
-      break;
-    fi;
-  done;
+  logDebug "Shuffled dice:"
+  for die in "${shuffledDice[@]}"; do
+    logDebug "  ${die}";
+  done
+
+  # TODO: make the numbering of outputDir and grid filename more tightly coupled
+  randomGridFilenameBasename="random-boggle-grid.%05d.txt"
+  randomGridFilenameFormatStr="${outputDir}/${randomGridFilenameBasename}"
+  GRID="$(printf "${randomGridFilenameFormatStr}" "${outputDirIndex}")"
   touch "${GRID}"
-  declare -i rowNum colNum
+  declare -i rowNum colNum idx
   for rowNum in {0..4}; do
     line=""
     for colNum in {0..4}; do
@@ -152,6 +163,7 @@ function generateRandomGrid() {
   done
   logInfo "Random grid file generated:"
   logInfo "\n$(cat "${GRID}")"
+  cp "${GRID}" "${PWD}/data/grids/random/"
 }
 
 # Select specific files to use this run
@@ -171,9 +183,10 @@ function promptUserForGridAndWordFiles() {
           echo "Try again. Focus!"
         fi
       done
+    cp "${GRID}" "${outputDir}"
     fi
   fi
-  cp "${GRID}" "${outputDir}"
+
   # Select words file
   if [ -z "${WORDS}" ]; then
     if ${randomFiles}; then
