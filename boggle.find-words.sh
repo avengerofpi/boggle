@@ -157,9 +157,9 @@ function generateRandomGrid() {
       logDebug "Rolled die '${die}' and selected face '${clue}'"
       line+="${clue} "
     done
-    line="${line% }\n"
+    line="${line% }"
     logDebug "Appending line '${line}' to grid file"
-    printf "${line}" >> "${GRID}"
+    echo "${line}" >> "${GRID}"
   done
   logInfo "Random grid file generated:"
   logInfo "\n$(cat "${GRID}")"
