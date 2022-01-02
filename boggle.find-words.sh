@@ -632,7 +632,7 @@ function extendSinglePathByCluesOfLengthN() {
           fi
         fi
       fi
-      if [ ! ${newPathFound} ]; then
+      if ! ${newPathFound}; then
         logDebug "      Failure - does not extend the path"
       fi
     done # extend path by N chars
