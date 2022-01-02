@@ -514,7 +514,6 @@ function extractPathsForLongestPrefix() {
   for prefixLen in $(seq ${len} -1 1); do
     prefix="${word:0:${prefixLen}}"
     pathList="${prefixToPathMap[${prefix}]:-}"
-    # TODO: investigate...how to use this to help shortcircuit searches for impossible words for the current grid
     logDebug "  Checking prefix '${prefix}'"
     if [ -n "${pathList}" ]; then
       logDebug "    We have indeed encountered prefix '${prefix}' before"
@@ -577,14 +576,7 @@ function setInitialPaths() {
 # clues of length N (if any).
 function extendSinglePathByCluesOfLengthN() {
   # Extract next N-char extension from $word
-  declare ext=""
-  if [ ${pathLen} -le $((len-N)) ]; then
-    ext="${word:${pos}:${N}}"
-  else
-    logDebug "  There are not enough chars left in word '${word}' after '${prefix}' to extend '${N}' chars"
-    return
-  fi
-
+  declare ext="${word:${pos}:${N}}"
   logDebug "Checking ext '${ext}' at position '${pos}'"
   declare newPrefix="${prefix}${ext}"
   prefixToPathMap["${newPrefix}"]="${prefixToPathMap[${newPrefix}]:-}"
@@ -656,6 +648,11 @@ function extendSinglePathByCluesOfLengthN() {
 }
 
 # Loop through current path object and try extending each of them
+# If we encounter a prefix(string) that cannot be built from the current boggle
+# grid, set impossiblePrefixes[${prefix}] to a non-zero string (e.g., the
+# prefix itself) and use the array to help short-circuit searches on words with
+# no possible paths.
+declare -A impossiblePrefixes
 function extendPaths() {
   logDebug "Attempting to extend pathObjects:"
   for pathObj in "${pathObjects[@]}"; do
@@ -665,13 +662,22 @@ function extendPaths() {
   declare -a newPathObjects=()
   declare -i newPathI=0
   declare -i pathLen
+  declare -A prefixesToCheckForImpossibleness
   for pathObj in "${pathObjects[@]}"; do
     # Parse path object
     read path pathLen prefix < <(echo "${pathObj}")
     pos=${pathLen}
     logDebug "Inspecting partial path '${path}' of length '${pos}' (${prefix}) for word '${word}'"
     for N in {1..2}; do
-      extendSinglePathByCluesOfLengthN
+      if [ ${pathLen} -le $((len-N)) ]; then
+        extendSinglePathByCluesOfLengthN
+        # Keep track of prefixes encountered for inspection after all pathObjects have been processed
+        declare ext="${word:${pos}:${N}}"
+        declare newPrefix="${prefix}${ext}"
+        prefixesToCheckForImpossibleness["${newPrefix}"]="check me later"
+      else
+        logDebug "  There are not enough chars left in word '${word}' after '${prefix}' to extend '${N}' chars"
+      fi
     done
     logDebug "\n"
   done # pathObj iteration
@@ -688,15 +694,48 @@ function extendPaths() {
   for pathObj in "${pathObjects[@]}"; do
     logDebug "  ${pathObj}"
   done # pathObj iteration
+
+  # Check encountered prefixes for any that had no valid paths found
+  # Add any such prefixes to the impossiblePrefixes list
+  logDebug "Checking encountered prefixes for any that had no valid paths found"
+  for prefix in "${!prefixesToCheckForImpossibleness[@]}"; do
+    logDebug "  Checking '${prefix}'"
+    if [ -z "${prefixToPathMap[${prefix}]:-}" ]; then
+      logDebug "    Adding prefix '${prefix}' to the list of impossible prefixes"
+      impossiblePrefixes["${prefix}"]="${prefix}"
+    fi
+  done
+
   logDebug "\n"
+}
+
+declare impossiblePrefixesFound=false
+function checkForImpossiblePrefixes() {
+  logDebug "Checking whether any prefixes for word '${word}' have been seen before (and have INVALID paths)"
+  declare -i prefixLen
+  declare prefix=""
+  local prefix pathList path pathLen prefix
+  # Work backwords to we can exit immediately if a hit if found
+  for prefixLen in $(seq ${len} -1 1); do
+    prefix="${word:0:${prefixLen}}"
+    logDebug "  Checking prefix '${prefix}'"
+    if [ -n "${impossiblePrefixes[${prefix}]:-}" ]; then
+      impossiblePrefixesFound=true
+      logDebug "    Impossible prefix found: '${prefix}' for word '${word}'"
+      return
+    fi
+  done
+  logDebug "  No impossible prefixes found"
 }
 
 function checkWordAgainstGrid() {
   logDebug "Checking word '${word}'"
   initCheckWordVars
+  impossiblePrefixesFound=false
   setInitialPaths
   logDebug "\n"
   while [ ${#pathObjects[@]} -gt 0 ]; do
+    checkForImpossiblePrefixes
     extendPaths
   done
   declare -i numWordSuccessfulPaths=${#wordSuccessfulPaths[@]};
