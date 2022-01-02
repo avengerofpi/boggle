@@ -421,7 +421,7 @@ function performAdjacentCluesFiltering() {
   logDebug " '${pattern3}'"
 
   # Apply the new filter pattern
-  filteredWordsFile2="${PWD}/tmp/${datetime}---${gridBasename}---${wordsBasename}---filtered2.txt"
+  filteredWordsFile2="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered2.txt"
   set +e
   egrep "${pattern2}" "${filteredWordsFile}" | egrep "${pattern3}" > "${filteredWordsFile2}"
   if [ $? -eq 2 ]; then
