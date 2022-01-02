@@ -4,9 +4,11 @@
 set -eu
 
 # Output setup
+function setupOutputDir() {
 datetime="$(date +"%F-%Hh%Mm%Ss")"
 outputDir="${PWD}/tmp/${datetime}"
 mkdir -p "${outputDir}"
+}
 
 # Logging levels
    debug=false;
@@ -51,6 +53,7 @@ function logError()    { if $error;     then echo -e "${ERROR_COLOR}ERROR:"     
 function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR}SCORE:"       "${@}${TPUT_RESET}"; fi; }
 
 # Declare some files for later selection
+function selectDefaultFileOptionLists() {
 GRID_FILES=(
   ${PWD}/data/grids/*.txt
 )
@@ -60,11 +63,13 @@ WORD_FILES=(
 )
 
 BOGGLE_DICE_TXT="${PWD}/data/dice/sample-boggle-dice.txt"
+}
 
 # Add argument parsing
 # Based on suggestions from https://drewstokes.com/bash-argument-parsing
 declare randomFiles=false
 declare GRID="" WORDS=""
+function parseArgs() {
 while (( "$#" )); do
   case "$1" in
     -g|--grid-file)
@@ -103,6 +108,7 @@ while (( "$#" )); do
       ;;
   esac
 done
+}
 
 # Generate a random boggle board from the selected dice config file
 function generateRandomGrid() {
@@ -149,6 +155,7 @@ function generateRandomGrid() {
 }
 
 # Select specific files to use this run
+function promptUserForGridAndWordFiles() {
 GRID_PROMPT="Choose the grid file to use: "
 WORDS_PROMPT="Choose the words file to use: "
 # Select grid file
@@ -184,6 +191,7 @@ if [ -z "${WORDS}" ]; then
 fi
 logInfo "Selected grid  file '${GRID}'"
 logInfo "Selected words file '${WORDS}'"
+}
 
 # Exit codes and handling (to be OR'd together ('|'))
 declare -i FILE_MISSING=1
@@ -192,6 +200,7 @@ declare -i INVALID_GRID_FILE=4
 declare -i GREP_ERROR=8
 
 # Exit if exitCode has been set, log and exit if so
+declare -i exitCode=0
 function checkExitCode() {
   if [ ${exitCode} -gt 0 ]; then
     logError
@@ -203,7 +212,7 @@ function checkExitCode() {
 # Perform checks/validations before rest of code runs
 
 # Verify chosen files exist
-declare -i exitCode=0
+function validateFiles() {
 if [ ! -f "${GRID}" ]; then
   logError "ERROR: Boggle grid file '${GRID}' does not exist"
   exitCode=$((exitCode | FILE_MISSING))
@@ -247,6 +256,7 @@ if [ -n "${gridAntiMatch}" ]; then
   exitCode=$((exitCode | INVALID_GRID_FILE))
 fi
 checkExitCode
+}
 
 # Start fast filtering of words file
 
@@ -257,6 +267,8 @@ function logFilteredHitCount() {
 
 # Create writable copy of starting words list file.
 # We will filter on this copy rather than on the original.
+declare filteredWordsFile=""
+function createInitialFilteredWordsFile() {
 gridBasename="$(basename "${GRID}")"
 wordsBasename="$(basename "${WORDS}")"
 filteredWordsFile="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered.txt"
@@ -264,6 +276,7 @@ logInfo "Saving filtered words to file: ${filteredWordsFile}"
 cp "${WORDS}" "${filteredWordsFile}"
 chmod u+w "${filteredWordsFile}"
 logFilteredHitCount
+}
 
 # Add a pattern to filter out hits with too many of any char (or multi-char)
 
@@ -271,6 +284,7 @@ logFilteredHitCount
 # there's a multi-char clue 'in' that occurs once as well as single-char clues
 # 'i' and 'n', then it may be possible (depending on the actual grid) for 'in'
 # to occur more than once.
+function performClueCountsFiltering() {
 declare -A clueCnts
 for c in {a..z}; do
   clueCnts["${c}"]="0";
@@ -318,6 +332,7 @@ for clue in "${!clueCnts[@]}"; do
 done
 logDebug "Second pass filter ensuring no char/clue occurs too many times"
 logFilteredHitCount
+}
 
 # Now process pairs of adjacent clues.
 
@@ -326,6 +341,8 @@ logFilteredHitCount
 # denotiving value CLUE_VALUE at row i, column j, 1 <= i,j <= 5
 # The 5x5 structure of the grid file, and the validity of clues, should already
 # have been verified elsewhere.
+declare filteredWordsFile2=""
+function performAdjacentCluesFiltering() {
 declare -i i=1;
 declare -A gridMap
 logDebug "Setting up 'gridMap' associative array:"
@@ -415,6 +432,7 @@ checkExitCode
 set -e
 mv "${filteredWordsFile2}" "${filteredWordsFile}"
 logFilteredHitCount
+}
 
 # Switch from using regex patterns to filter down results to
 # actually checking each (remaining) possibility directly.
@@ -427,6 +445,7 @@ logFilteredHitCount
 declare -i i=1;
 unset gridMap
 declare -A gridMap
+function setupGridMap() {
 logDebug "Setting up 'gridMap' associative array:"
 while read i1 i2 i3 i4 i5; do
   gridMap["${i1}"]+=" ${i}1"; gridMap["${i1}"]="${gridMap[${i1}]# }"
@@ -448,6 +467,7 @@ for clue in "${!gridMap[@]}"; do
 done
 logDebug "Grid file contains (reminder/for comparison):"
 logDebug "\n$(cat "${GRID}")"
+}
 
 declare -i len=0
 declare -i pos=0
@@ -668,14 +688,19 @@ function checkWordAgainstGrid() {
 
 # Loop over words (lines) in words files
 # Reuse filteredWordsFil2
+function performFullPathSearchFiltering() {
 touch "${filteredWordsFile2}"
 while read word; do
   checkWordAgainstGrid
 done < <(cat "${filteredWordsFile}")
 mv "${filteredWordsFile2}" "${filteredWordsFile}"
+}
 
+# Score a words file
+declare -i score=0
 function scoreWordsFile() {
   wordsFile="${1}"
+  logInfo
   logInfo "Scoring words file '${wordsFile}'"
   declare -A scoringMap=(
     [4]=1
@@ -700,13 +725,27 @@ function scoreWordsFile() {
   logScore "  ${scoreString}"
 }
 
+function logCompletion() {
 logInfo
 logInfo "Done"
 logInfo "Final results available in file"
 logInfo "  ${filteredWordsFile}"
 logFilteredHitCount
+}
 
-# Score
-declare -i score=0
-logInfo
-scoreWordsFile "${filteredWordsFile}"
+function main() {
+  parseArgs "${@}"
+  setupOutputDir
+  selectDefaultFileOptionLists
+  promptUserForGridAndWordFiles
+  validateFiles
+  createInitialFilteredWordsFile
+  performClueCountsFiltering
+  performAdjacentCluesFiltering
+  setupGridMap
+  performFullPathSearchFiltering
+  logCompletion
+  scoreWordsFile "${filteredWordsFile}"
+}
+
+main "${@}"
