@@ -63,7 +63,6 @@ BOGGLE_DICE_TXT="${PWD}/data/dice/sample-boggle-dice.txt"
 
 # Add argument parsing
 # Based on suggestions from https://drewstokes.com/bash-argument-parsing
-#declare PARAMS=""
 declare randomFiles=false
 declare GRID="" WORDS=""
 while (( "$#" )); do
@@ -97,16 +96,13 @@ while (( "$#" )); do
       echo "Error: Unsupported flag $1" >&2
       exit 1
       ;;
-    *) # preserve positional arguments
-      #PARAMS="$PARAMS $1"
+    *) # positional parameters - unsupported
       logError "Encountered a positional param, but no positional params are supported"
       exit 2
       #shift
       ;;
   esac
 done
-# set positional arguments in their proper place
-#eval set -- "$PARAMS"
 
 # Generate a random boggle board from the selected dice config file
 function generateRandomGrid() {
@@ -356,7 +352,6 @@ for i in {1..5}; do
   for j in {1..4}; do
     a="${gridMap["$((i+0))$((j+0))"]}"
     b="${gridMap["$((i+0))$((j+1))"]}"
-    # TODO: Avoid duplicates
     echo "${a}${b}" >> "${regexFile}"
     echo "${b}${a}" >> "${regexFile}"
   done
@@ -366,7 +361,6 @@ for i in {1..4}; do
   for j in {1..5}; do
     a="${gridMap["$((i+0))$((j+0))"]}"
     b="${gridMap["$((i+1))$((j+0))"]}"
-    # TODO: Avoid duplicates
     echo "${a}${b}" >> "${regexFile}"
     echo "${b}${a}" >> "${regexFile}"
   done
@@ -376,7 +370,6 @@ for i in {1..4}; do
   for j in {1..4}; do
     a="${gridMap["$((i+0))$((j+1))"]}"
     b="${gridMap["$((i+1))$((j+0))"]}"
-    # TODO: Avoid duplicates
     echo "${a}${b}" >> "${regexFile}"
     echo "${b}${a}" >> "${regexFile}"
   done
@@ -386,7 +379,6 @@ for i in {1..4}; do
   for j in {1..4}; do
     a="${gridMap["$((i+0))$((j+0))"]}"
     b="${gridMap["$((i+1))$((j+1))"]}"
-    # TODO: Avoid duplicates
     echo "${a}${b}" >> "${regexFile}"
     echo "${b}${a}" >> "${regexFile}"
   done
