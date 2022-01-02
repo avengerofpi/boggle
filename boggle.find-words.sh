@@ -489,10 +489,10 @@ function initCheckWordVars() {
   wordSuccessfulPathsI=0
 }
 
-# TODO: generalize for arbitrary-length clues
-function setInitialPaths() {
+function extractPathsForLongestPrefix() {
   # Check if a prefix for the current word has an entry in prefixToPathMap
   declare -i prefixLen
+  declare prefix=""
   local prefix pathList path pathLen prefix
   # Work backwords to we can exit immediately if a hit if found
   for prefixLen in $(seq ${len} -1 1); do
@@ -511,9 +511,18 @@ function setInitialPaths() {
         pathObjects[${i}]="${pathObject}"
         i+=1
       done
-      return
+      break
     fi
   done
+  logDebug "num pre-found initial paths for prefix '${prefix}' of '${word}': ${#pathObjects[@]}"
+}
+
+# TODO: generalize for arbitrary-length clues
+function setInitialPaths() {
+  extractPathsForLongestPrefix
+  if [ ${#pathObjects[@]} -gt 0 ]; then
+    return
+  fi
 
   pos=0;
   local char1="${word:${pos}:1}"
