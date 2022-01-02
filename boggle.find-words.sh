@@ -75,6 +75,8 @@ function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR}SCORE:"     
 
 # Declare some files for later selection
 function selectDefaultFileOptionLists() {
+  # TODO: make vars for these dirs
+  # TODO: mv ./data/{grids,words,dice} to just ./{grids,words,dice}
   GRID_FILES=(
     ${PWD}/data/grids/*.txt
   )
@@ -508,26 +510,27 @@ function extractPathsForLongestPrefix() {
   declare prefix=""
   local prefix pathList path pathLen prefix
   # Work backwords to we can exit immediately if a hit if found
+  logDebug "Checking whether any prefixes have been seen before (and have VALID paths)"
   for prefixLen in $(seq ${len} -1 1); do
     prefix="${word:0:${prefixLen}}"
     pathList="${prefixToPathMap[${prefix}]:-}"
     # TODO: investigate...how to use this to help shortcircuit searches for impossible words for the current grid
-    logDebug "Checking whether the prefix '${prefix}' has been seen before (and has valid paths)"
+    logDebug "  Checking prefix '${prefix}'"
     if [ -n "${pathList}" ]; then
-      logDebug "  We have indeed encountered prefix '${prefix}' before"
+      logDebug "    We have indeed encountered prefix '${prefix}' before"
       # Parse pathList into pathObjects
       declare -i i=0
       for path in ${pathList}; do
         pathLen=$(( ${#path} / 2 ))
         pathObject="${path} ${pathLen} ${prefix}"
-        logDebug "  Adding path object '${pathObject}' to the pathObjects list"
+        logDebug "      Adding path object '${pathObject}' to the pathObjects list"
         pathObjects[${i}]="${pathObject}"
         i+=1
       done
       break
     fi
   done
-  logDebug "num pre-found initial paths for prefix '${prefix}' of '${word}': ${#pathObjects[@]}"
+  logDebug "  Number of previously found initial paths for prefix '${prefix}' of '${word}': ${#pathObjects[@]}"
 }
 
 # TODO: generalize for arbitrary-length clues
@@ -582,15 +585,14 @@ function extendSinglePathByCluesOfLengthN() {
     return
   fi
 
+  logDebug "Checking ext '${ext}' at position '${pos}'"
   declare newPrefix="${prefix}${ext}"
   prefixToPathMap["${newPrefix}"]="${prefixToPathMap[${newPrefix}]:-}"
-  logDebug "Initializing (or reaffirming) prefixToPathMap for '${newPrefix}'"
-  logDebug "  Checking ext '${ext}' at position '${pos}'"
-  logDebug "    ${word}[${pos}:${N}] = '${ext}'"
+  logDebug "  Initializing (or reaffirming) prefixToPathMap for '${newPrefix}'"
   # Extract list (space-delimited string) of coordinates for ext
   nextPositions="${gridMap[${ext}]:-}"
   if [ -n "${nextPositions}" ]; then
-    logDebug "Found at least one position to attempt to extend our paths from"
+    logDebug "Found at least one position to attempt to extend our paths from for ext '${ext}'"
     # At least one potential clue may be able to extend our current path.
     # But for each, we need to check that the clue coor hasn't been used
     # already and, if it hasn't, that it validly extends the current path
@@ -625,7 +627,7 @@ function extendSinglePathByCluesOfLengthN() {
           declare newPath="${path}${nextPosition}"
           declare -i newPathLen=$((pathLen+1))
           newPathObject="${newPath} ${newPathLen} ${newPrefix}"
-          logDebug "        Success! path extension found: '${newPathObject}'"
+          logDebug "        SUCCESS - path extension FOUND: '${newPathObject}'"
           # Update helper prefixToPathMap. If we are making proper use of this helper
           # map, we should avoid any situation where a prefix or a new path repeat
           # and so we should not need to check for redundancy.
@@ -646,7 +648,7 @@ function extendSinglePathByCluesOfLengthN() {
         fi
       fi
       if ! ${newPathFound}; then
-        logDebug "      Failure - does not extend the path"
+        logDebug "      FAILURE - path extension NOT found"
       fi
     done # extend path by N chars
   fi
