@@ -10,6 +10,33 @@ set -eu
    error=true;
 scoreLog=true;
 
+# To turn colored output off and on, and to enable command-line flags so this
+# can be chosen at runtime use function var 'myTput' to choose between real
+# tput-based coloring and uncolored output (use whatever coloring the terminal
+# is already set to).
+# TODO: clarify in my comments that tput is being used for slightly more than just coloring
+function noColorTput() {
+  return
+}
+function turnColorOn() {
+  logDebug "Turning color ON"
+  # Use a function instead of an alias so that it will stick
+  unset -f myTput
+  function myTput() {
+    tput "${@}"
+  }
+  setupColoring
+}
+function turnColorOff() {
+  logDebug "Turning color OFF"
+  # Use a function instead of an alias so that it will stick
+  unset -f myTput
+  function myTput() {
+    return
+  }
+  setupColoring
+}
+
 # Argument parsing
 # Based on suggestions from https://drewstokes.com/bash-argument-parsing
 declare randomFiles=false
@@ -24,7 +51,7 @@ function parseArgs() {
           logDebug "Choosing GRID file '${GRID}'"
           shift 2
         else
-          echo "Error: Argument for $1 is missing" >&2
+          logError "Error: Argument for $1 is missing" >&2
           exit 1
         fi
         ;;
@@ -34,7 +61,7 @@ function parseArgs() {
           logDebug "Choosing WORDS file '${WORDS}'"
           shift 2
         else
-          echo "Error: Argument for $1 is missing" >&2
+          logError "Error: Argument for $1 is missing" >&2
           exit 1
         fi
         ;;
@@ -42,6 +69,15 @@ function parseArgs() {
       -r|--random-files)
         randomFiles=true
         logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
+        shift 1
+        ;;
+      # Color toggling. Won't affecting logging that already happened
+      --color)
+        turnColorOn
+        shift 1
+        ;;
+      --no-color)
+        turnColorOff
         shift 1
         ;;
       # Turn logging options on
@@ -88,7 +124,7 @@ function parseArgs() {
         ;;
       # Unsupported and positional args
       -*|--*=) # unsupported flags
-        echo "Error: Unsupported flag $1" >&2
+        logError "Error: Unsupported flag $1" >&2
         exit 1
         ;;
       *) # positional parameters - unsupported
@@ -129,16 +165,17 @@ function setupOutputDir() {
 
 # Coloration
 # (not currently wrapped in a function)
+function setupColoring() {
 TPUT_RESET="$(tput sgr0)";
 
- FAINT="$(tput dim)";
-BRIGHT="$(tput bold)";
+ FAINT="$(myTput dim)";
+BRIGHT="$(myTput bold)";
 
-   RED_FG="$(tput setaf  1)";
- GREEN_FG="$(tput setaf  2)";
-YELLOW_FG="$(tput setaf 11)";
-  CYAN_FG="$(tput setaf 14)";
-PURPLE_FG="$(tput setaf 93)";
+   RED_FG="$(myTput setaf  1)";
+ GREEN_FG="$(myTput setaf  2)";
+YELLOW_FG="$(myTput setaf 11)";
+  CYAN_FG="$(myTput setaf 14)";
+PURPLE_FG="$(myTput setaf 93)";
 
 BRIGHT_RED_FG="${BRIGHT}${RED_FG}";
 FAINT_GREEN_FG="${FAINT}${GREEN_FG}";
@@ -146,9 +183,9 @@ BRIGHT_YELLOW_FG="${BRIGHT}${YELLOW_FG}";
 BRIGHT_CYAN_FG="${BRIGHT}${CYAN_FG}";
 BRIGHT_PURPLE_FG="${BRIGHT}${PURPLE_FG}";
 
-   RED_BG="$(tput setab 9)";
- GREEN_BG="$(tput setab 2)";
-YELLOW_BG="$(tput setab 3)";
+   RED_BG="$(myTput setab 9)";
+ GREEN_BG="$(myTput setab 2)";
+YELLOW_BG="$(myTput setab 3)";
 
    DEBUG_COLOR="${BRIGHT_CYAN_FG}";
     INFO_COLOR="${BRIGHT_YELLOW_FG}";
@@ -156,12 +193,21 @@ YELLOW_BG="$(tput setab 3)";
    ERROR_COLOR="${BRIGHT_RED_FG}";
    SCORE_COLOR="${YELLOW_BG}${BRIGHT_RED_FG}";
 
+  logDebug "Coloring is now setup"
+  setupLoggingFunctions
+}
+
 # Logging functions
-function logDebug()    { if $debug;     then echo -e "${DEBUG_COLOR}DEBUG:"       "${@}${TPUT_RESET}"; fi; }
-function logInfo()     { if $info;      then echo -e "${INFO_COLOR}INFO:  "       "${@}${TPUT_RESET}"; fi; }
-function logWarn()     { if $warn;      then echo -e "${WARN_COLOR}WARN:  "       "${@}${TPUT_RESET}"; fi; }
-function logError()    { if $error;     then echo -e "${ERROR_COLOR}ERROR:"       "${@}${TPUT_RESET}"; fi; }
-function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR}SCORE:"       "${@}${TPUT_RESET}"; fi; }
+function setupLoggingFunctions() {
+unset -f logDebug logInfo logWarn logError logScore
+function logDebug()    { if $debug;     then echo -e "${DEBUG_COLOR:-}DEBUG:"       "${@}${TPUT_RESET:-}"; fi; }
+function logInfo()     { if $info;      then echo -e "${INFO_COLOR:-}INFO:  "       "${@}${TPUT_RESET:-}"; fi; }
+function logWarn()     { if $warn;      then echo -e "${WARN_COLOR:-}WARN:  "       "${@}${TPUT_RESET:-}"; fi; }
+function logError()    { if $error;     then echo -e "${ERROR_COLOR:-}ERROR:"       "${@}${TPUT_RESET:-}"; fi; }
+function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR:-}SCORE:"       "${@}${TPUT_RESET:-}"; fi; }
+
+logDebug "Logging is now setup"
+}
 
 # Declare files/file lists for later usage
 function selectDefaultFileOptionLists() {
@@ -808,6 +854,8 @@ function logCompletion() {
 }
 
 function main() {
+  setupLoggingFunctions
+  turnColorOn
   parseArgs "${@}"
   setupOutputDir
   selectDefaultFileOptionLists
