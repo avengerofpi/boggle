@@ -755,6 +755,8 @@ function performFullPathSearchFiltering() {
   while read word; do
     checkWordAgainstGrid
   done < <(cat "${filteredWordsFile}")
+  # TODO: maintain iterative sequence of these filtered word lists better
+  mv "${filteredWordsFile}" "${filteredWordsFile}.penultimate"
   mv "${filteredWordsFile2}" "${filteredWordsFile}"
 }
 
