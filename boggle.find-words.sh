@@ -671,26 +671,28 @@ function extendSinglePathByCluesOfLengthN() {
           declare newPath="${path}${nextPosition}"
           declare -i newPathLen=$((pathLen+1))
           newPathObject="${newPath} ${newPathLen} ${newPrefix}"
-          logDebug "        SUCCESS - path extension FOUND: '${newPathObject}'"
+          logDebug "        SUCCESS - path extension FOUND: '${pathObj}' -> '${newPathObject}'"
           # Update helper prefixToPathMap. If we are making proper use of this helper
           # map, we should avoid any situation where a prefix or a new path repeat
           # and so we should not need to check for redundancy.
           # TODO: (maybe) add a debug check for redundancy
           prefixToPathMap["${newPrefix}"]+=" ${newPath}"
           if [ ${newPathLen} -eq ${#word} ]; then
-            logDebug "          This path (len=${newPathLen}) completes the target word (len=${len})"
-            logDebug "          Appending '${newPathObject}' to wordSuccessfulPaths"
+            logDebug "          This path completes the target word"
+            logDebug "            Appending '${newPathObject}' to wordSuccessfulPaths"
             wordSuccessfulPaths+=("${newPathObject}")
             # For now, stop at the first successful path rather than trying to find all paths
             # CANCEL THE SHORT-CIRCUIT HERE, so we can grab all the "prefix paths"
             #break
           else
+            logDebug "          This path does NOT complete the target word"
+            logDebug "            Appending '${newPathObject}' to newPathObjects"
             newPathObjects+=("${newPathObject}")
           fi
         fi
       fi
       if ! ${newPathFound}; then
-        logDebug "      FAILURE - path extension NOT found"
+        logDebug "      FAILURE - path extension NOT found: '${pathObj}' -> void"
       fi
     done # extend path by N chars
   fi
