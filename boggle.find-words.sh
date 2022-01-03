@@ -3,20 +3,21 @@
 # Exit on errors. Undefined vars count as errors.
 set -eu
 
-# Logging levels
+# Default ogging levels
    debug=false;
     info=true;
     warn=true;
    error=true;
 scoreLog=true;
 
-# Add argument parsing
+# Argument parsing
 # Based on suggestions from https://drewstokes.com/bash-argument-parsing
 declare randomFiles=false
 declare GRID="" WORDS=""
 function parseArgs() {
   while (( "$#" )); do
     case "$1" in
+      # Flags for explicit file choices
       -g|--grid-file)
         if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
           GRID="$2"
@@ -37,6 +38,7 @@ function parseArgs() {
           exit 1
         fi
         ;;
+      # Turn on random selection/generation for any files not explicity chosen
       -r|--random-files)
         randomFiles=true
         logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
@@ -84,6 +86,7 @@ function parseArgs() {
         scoreLog=false
         shift 1
         ;;
+      # Unsupported and positional args
       -*|--*=) # unsupported flags
         echo "Error: Unsupported flag $1" >&2
         exit 1
@@ -91,13 +94,12 @@ function parseArgs() {
       *) # positional parameters - unsupported
         logError "Encountered a positional param, but no positional params are supported"
         exit 2
-        #shift
         ;;
     esac
   done
 }
 
-# Output setup
+# Select an output dir to use
 declare -i outputDirIndex=""
 declare outputDir=""
 function setupOutputDir() {
@@ -126,6 +128,7 @@ function setupOutputDir() {
 }
 
 # Coloration
+# (not currently wrapped in a function)
 TPUT_RESET="$(tput sgr0)";
 
  FAINT="$(tput dim)";
@@ -160,7 +163,7 @@ function logWarn()     { if $warn;      then echo -e "${WARN_COLOR}WARN:  "     
 function logError()    { if $error;     then echo -e "${ERROR_COLOR}ERROR:"       "${@}${TPUT_RESET}"; fi; }
 function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR}SCORE:"       "${@}${TPUT_RESET}"; fi; }
 
-# Declare some files for later selection
+# Declare files/file lists for later usage
 function selectDefaultFileOptionLists() {
   # TODO: make vars for these dirs
   # TODO: mv ./data/{grids,words,dice} to just ./{grids,words,dice}
@@ -210,7 +213,8 @@ function generateRandomGrid() {
   cp "${GRID}" "${PWD}/data/grids/random/"
 }
 
-# Select specific files to use this run
+# Prompt user to select specific files to use this run unless a file was
+# already specified on command-line or random selection was specified
 function promptUserForGridAndWordFiles() {
   GRID_PROMPT="Choose the grid file to use: "
   WORDS_PROMPT="Choose the words file to use: "
@@ -266,7 +270,7 @@ function checkExitCode() {
   fi
 }
 
-# Perform checks/validations before rest of code runs
+# Functions to perform checks/validations before rest of code runs
 
 # Verify chosen files exist
 function validateFiles() {
@@ -315,14 +319,15 @@ function validateFiles() {
   checkExitCode
 }
 
-# Start fast filtering of words file
+# Start fast filtering of words file using regex patterns built from the
+# current grid file
 
 function logFilteredHitCount() {
   numHits=$(wc -l "${filteredWordsFile}" | awk '{print $1}')
   logInfo "Number of filtered hits found: '${numHits}'"
 }
 
-# Create writable copy of starting words list file.
+# Create writable copy of selected words file.
 # We will filter on this copy rather than on the original.
 declare filteredWordsFile=""
 function createInitialFilteredWordsFile() {
@@ -337,7 +342,7 @@ function createInitialFilteredWordsFile() {
 
 # Add a pattern to filter out hits with too many of any char (or multi-char)
 
-# First, get counts of each clue. Be careful to not trim too much, e.g. if
+# First, get counts of each clue. Be careful to not filter too greedily, e.g. if
 # there's a multi-char clue 'in' that occurs once as well as single-char clues
 # 'i' and 'n', then it may be possible (depending on the actual grid) for 'in'
 # to occur more than once.
@@ -364,8 +369,10 @@ function performClueCountsFiltering() {
   for clue in "${!clueCnts[@]}"; do
     clueCnt="${clueCnts[${clue}]}"
     logDebug "Checking for too many hits against clue '${clue}' (cnt: '${clueCnt}')"
-    # If clue is multi-char, check the individual chars cnts in case they all occur individually
-    # Note that if I were to properly handle multi-char clues, I'd need to check all sub-stings.
+    # If clue is multi-char, check the individual chars cnts in case they all
+    # occur individually Note that if I were to properly handle arbitrary
+    # length or number of multi-char clues, I'd need to check all possible ways
+    # to build each multi-char clue from others
     declare -i clueLen="${#clue}"
     declare -i maxExtraHits=0
     if [ "${clueLen}" -gt 1 ]; then
@@ -391,7 +398,10 @@ function performClueCountsFiltering() {
   logFilteredHitCount
 }
 
-# Now process pairs of adjacent clues.
+# Now filter using pairs of adjacent clues. Form a regex of all such pairs and
+# ensure each word is built from a sequence of these, with the option to have a
+# another single clue in there (words must be built from either an odd number
+# of clues or an even number of clue).
 
 # First, read the grid into an associative array with keys/value pairs of the form
 #   ij=CLUE_VALUE
@@ -401,6 +411,7 @@ function performClueCountsFiltering() {
 declare filteredWordsFile2=""
 function performAdjacentCluesFiltering() {
   declare -i i=1
+  # Map from "ij" -> "<clue at row i, col j>"
   declare -A gridCoorToValueMap
   logDebug "Setting up 'gridCoorToValueMap' associative array:"
   while read i1 i2 i3 i4 i5; do
@@ -415,7 +426,7 @@ function performAdjacentCluesFiltering() {
   logDebug "Grid file contains (reminder/for comparison):"
   logDebug "\n$(cat "${GRID}")"
 
-  # Start building the possible regexes from pairs of clues
+  # Start building the possible sub-patterns from pairs of clues
   declare -i i j
   regexFile="${outputDir}/regex-list.${gridBasename}.txt"
   touch "${regexFile}"
@@ -478,6 +489,7 @@ function performAdjacentCluesFiltering() {
   logDebug " '${pattern3}'"
 
   # Apply the new filter pattern
+  # TODO: centralize the definition/declaration of all filtered word list files
   filteredWordsFile2="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered2.txt"
   set +e
   egrep "${pattern2}" "${filteredWordsFile}" | egrep "${pattern3}" > "${filteredWordsFile2}"
@@ -492,7 +504,7 @@ function performAdjacentCluesFiltering() {
 }
 
 # Switch from using regex patterns to filter down results to
-# actually checking each (remaining) possibility directly.
+# actually checking each remaining possibility directly.
 
 # First, read the grid into an associative array with keys/value pairs of the form
 #   CLUE_VALUE="ab cd ..."
@@ -527,10 +539,10 @@ function setupGridMap() {
 
 declare -i len=0
 declare -i pos=0
-# Path objects are space-delimited strings containing 'path pathLen prefix'
+# pathObject values are space-delimited strings containing 'path pathLen prefix'
 # where 'path' is a sequence of sequentially adjacent coordinates on the
 # grid that spells out the 'prefix' or length 'pathLen' for the current word
-# e.g., '112122 4 inni'
+# e.g., '112122 3 inni'
 declare -a pathObjects=()
 declare -a wordSuccessfulPaths=()
 # Map from prefixes (of words) to string-encoded space-delimited arrays of paths
@@ -543,8 +555,9 @@ function initCheckWordVars() {
   wordSuccessfulPaths=()
 }
 
+# Check prefixes of the current word to see if we already know the possible
+# paths for any of them. Extract the paths for longest such prefix, if any.
 function extractPathsForLongestPrefix() {
-  # Check if a prefix for the current word has an entry in prefixToPathMap
   declare -i prefixLen
   declare prefix=""
   local prefix pathList path pathLen prefix
