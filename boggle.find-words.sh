@@ -400,16 +400,16 @@ function performClueCountsFiltering() {
 # have been verified elsewhere.
 declare filteredWordsFile2=""
 function performAdjacentCluesFiltering() {
-  declare -i i=1;
-  declare -A gridMap
-  logDebug "Setting up 'gridMap' associative array:"
+  declare -i i=1
+  declare -A gridCoorToValueMap
+  logDebug "Setting up 'gridCoorToValueMap' associative array:"
   while read i1 i2 i3 i4 i5; do
-    gridMap["${i}1"]="${i1}"
-    gridMap["${i}2"]="${i2}"
-    gridMap["${i}3"]="${i3}"
-    gridMap["${i}4"]="${i4}"
-    gridMap["${i}5"]="${i5}"
-    logDebug "${i}1=${gridMap[${i}1]} ${i}2=${gridMap[${i}2]} ${i}3=${gridMap[${i}3]} ${i}4=${gridMap[${i}4]} ${i}5=${gridMap[${i}5]}"
+    gridCoorToValueMap["${i}1"]="${i1}"
+    gridCoorToValueMap["${i}2"]="${i2}"
+    gridCoorToValueMap["${i}3"]="${i3}"
+    gridCoorToValueMap["${i}4"]="${i4}"
+    gridCoorToValueMap["${i}5"]="${i5}"
+    logDebug "${i}1=${gridCoorToValueMap[${i}1]} ${i}2=${gridCoorToValueMap[${i}2]} ${i}3=${gridCoorToValueMap[${i}3]} ${i}4=${gridCoorToValueMap[${i}4]} ${i}5=${gridCoorToValueMap[${i}5]}"
     i+=1
   done < <(cat "${GRID}")
   logDebug "Grid file contains (reminder/for comparison):"
@@ -424,8 +424,8 @@ function performAdjacentCluesFiltering() {
   # Horizontal pairs
   for i in {1..5}; do
     for j in {1..4}; do
-      a="${gridMap["$((i+0))$((j+0))"]}"
-      b="${gridMap["$((i+0))$((j+1))"]}"
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
       echo "${a}${b}" >> "${regexFile}"
       echo "${b}${a}" >> "${regexFile}"
     done
@@ -433,8 +433,8 @@ function performAdjacentCluesFiltering() {
   # Vertical pairs
   for i in {1..4}; do
     for j in {1..5}; do
-      a="${gridMap["$((i+0))$((j+0))"]}"
-      b="${gridMap["$((i+1))$((j+0))"]}"
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
       echo "${a}${b}" >> "${regexFile}"
       echo "${b}${a}" >> "${regexFile}"
     done
@@ -442,8 +442,8 @@ function performAdjacentCluesFiltering() {
   # Forward diagonal pairs
   for i in {1..4}; do
     for j in {1..4}; do
-      a="${gridMap["$((i+0))$((j+1))"]}"
-      b="${gridMap["$((i+1))$((j+0))"]}"
+      a="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
       echo "${a}${b}" >> "${regexFile}"
       echo "${b}${a}" >> "${regexFile}"
     done
@@ -451,8 +451,8 @@ function performAdjacentCluesFiltering() {
   # Backward diagonal pairs
   for i in {1..4}; do
     for j in {1..4}; do
-      a="${gridMap["$((i+0))$((j+0))"]}"
-      b="${gridMap["$((i+1))$((j+1))"]}"
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
       echo "${a}${b}" >> "${regexFile}"
       echo "${b}${a}" >> "${regexFile}"
     done
@@ -500,7 +500,6 @@ function performAdjacentCluesFiltering() {
 # The 5x5 structure of the grid file, and the validity of clues, should already
 # have been verified elsewhere.
 declare -i i=1;
-unset gridMap
 declare -A gridMap
 function setupGridMap() {
   logDebug "Setting up 'gridMap' associative array:"
