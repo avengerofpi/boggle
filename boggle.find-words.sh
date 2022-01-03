@@ -3,6 +3,58 @@
 # Exit on errors. Undefined vars count as errors.
 set -eu
 
+# Logging levels
+   debug=false;
+    info=true;
+    warn=true;
+   error=true;
+scoreLog=true;
+
+# Add argument parsing
+# Based on suggestions from https://drewstokes.com/bash-argument-parsing
+declare randomFiles=false
+declare GRID="" WORDS=""
+function parseArgs() {
+  while (( "$#" )); do
+    case "$1" in
+      -g|--grid-file)
+        if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+          GRID="$2"
+          logDebug "Choosing GRID file '${GRID}'"
+          shift 2
+        else
+          echo "Error: Argument for $1 is missing" >&2
+          exit 1
+        fi
+        ;;
+      -w|--words-file)
+        if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+          WORDS="$2"
+          logDebug "Choosing WORDS file '${WORDS}'"
+          shift 2
+        else
+          echo "Error: Argument for $1 is missing" >&2
+          exit 1
+        fi
+        ;;
+      -r|--random-files)
+        randomFiles=true
+        logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
+        shift 1
+        ;;
+      -*|--*=) # unsupported flags
+        echo "Error: Unsupported flag $1" >&2
+        exit 1
+        ;;
+      *) # positional parameters - unsupported
+        logError "Encountered a positional param, but no positional params are supported"
+        exit 2
+        #shift
+        ;;
+    esac
+  done
+}
+
 # Output setup
 declare -i outputDirIndex=""
 declare outputDir=""
@@ -30,13 +82,6 @@ function setupOutputDir() {
   mkdir -p "${outputDir}"
   touch "${outputDir}/${datetime}.txt"
 }
-
-# Logging levels
-   debug=false;
-    info=true;
-    warn=true;
-   error=true;
-scoreLog=true;
 
 # Coloration
 TPUT_RESET="$(tput sgr0)";
@@ -86,51 +131,6 @@ function selectDefaultFileOptionLists() {
   )
 
   BOGGLE_DICE_TXT="${PWD}/data/dice/sample-boggle-dice.txt"
-}
-
-# Add argument parsing
-# Based on suggestions from https://drewstokes.com/bash-argument-parsing
-declare randomFiles=false
-declare GRID="" WORDS=""
-function parseArgs() {
-  while (( "$#" )); do
-    case "$1" in
-      -g|--grid-file)
-        if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-          GRID="$2"
-          logDebug "Choosing GRID file '${GRID}'"
-          shift 2
-        else
-          echo "Error: Argument for $1 is missing" >&2
-          exit 1
-        fi
-        ;;
-      -w|--words-file)
-        if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-          WORDS="$2"
-          logDebug "Choosing WORDS file '${WORDS}'"
-          shift 2
-        else
-          echo "Error: Argument for $1 is missing" >&2
-          exit 1
-        fi
-        ;;
-      -r|--random-files)
-        randomFiles=true
-        logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
-        shift 1
-        ;;
-      -*|--*=) # unsupported flags
-        echo "Error: Unsupported flag $1" >&2
-        exit 1
-        ;;
-      *) # positional parameters - unsupported
-        logError "Encountered a positional param, but no positional params are supported"
-        exit 2
-        #shift
-        ;;
-    esac
-  done
 }
 
 # Generate a random boggle board from the selected dice config file
