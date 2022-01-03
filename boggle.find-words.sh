@@ -42,6 +42,48 @@ function parseArgs() {
         logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
         shift 1
         ;;
+      # Turn logging options on
+      --debug)
+        debug=true
+        shift 1
+        ;;
+      --info)
+        info=true
+        shift 1
+        ;;
+      --warn)
+        warn=true
+        shift 1
+        ;;
+      --error)
+        error=true
+        shift 1
+        ;;
+      --score)
+        scoreLog=true
+        shift 1
+        ;;
+      # Turn logging options off
+      --no-debug)
+        debug=false
+        shift 1
+        ;;
+      --no-info)
+        info=false
+        shift 1
+        ;;
+      --no-warn)
+        warn=false
+        shift 1
+        ;;
+      --no-error)
+        error=false
+        shift 1
+        ;;
+      --no-score)
+        scoreLog=false
+        shift 1
+        ;;
       -*|--*=) # unsupported flags
         echo "Error: Unsupported flag $1" >&2
         exit 1
