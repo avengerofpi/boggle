@@ -46,7 +46,7 @@ function parseArgs() {
     case "$1" in
       # Flags for explicit file choices
       -g|--grid-file)
-        if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        if [ -n "${2:-}" ] && [ ${2:0:1} != "-" ]; then
           GRID="$2"
           logDebug "Choosing GRID file '${GRID}'"
           shift 2
@@ -56,7 +56,7 @@ function parseArgs() {
         fi
         ;;
       -w|--words-file)
-        if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        if [ -n "${2:-}" ] && [ ${2:0:1} != "-" ]; then
           WORDS="$2"
           logDebug "Choosing WORDS file '${WORDS}'"
           shift 2
