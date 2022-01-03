@@ -536,13 +536,11 @@ declare -a wordSuccessfulPaths=()
 # Map from prefixes (of words) to string-encoded space-delimited arrays of paths
 # e.g., prefixToPathMap["inni"]="112122 42524334"
 declare -A prefixToPathMap
-declare -i wordSuccessfulPathsI
 function initCheckWordVars() {
   len=${#word}
   pos=0
   pathObjects=()
   wordSuccessfulPaths=()
-  wordSuccessfulPathsI=0
 }
 
 function extractPathsForLongestPrefix() {
@@ -668,15 +666,13 @@ function extendSinglePathByCluesOfLengthN() {
           prefixToPathMap["${newPrefix}"]+=" ${newPath}"
           if [ ${newPathLen} -eq ${#word} ]; then
             logDebug "          This path (len=${newPathLen}) completes the target word (len=${len})"
-            logDebug "          Appending wordSuccessfulPaths[${wordSuccessfulPathsI}]=${newPathObject}"
-            wordSuccessfulPaths[${wordSuccessfulPathsI}]="${newPathObject}"
-            wordSuccessfulPathsI+=1
+            logDebug "          Appending '${newPathObject}' to wordSuccessfulPaths"
+            wordSuccessfulPaths+=("${newPathObject}")
             # For now, stop at the first successful path rather than trying to find all paths
             # CANCEL THE SHORT-CIRCUIT HERE, so we can grab all the "prefix paths"
             #break
           else
-            newPathObjects[${newPathI}]="${newPathObject}"
-            newPathI+=1
+            newPathObjects+=("${newPathObject}")
           fi
         fi
       fi
@@ -696,7 +692,6 @@ function extendPaths() {
   done # pathObj iteration
 
   declare -a newPathObjects=()
-  declare -i newPathI=0
   declare -i pathLen
   for pathObj in "${pathObjects[@]}"; do
     # Parse path object
