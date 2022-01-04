@@ -40,7 +40,9 @@ function turnColorOff() {
 # Argument parsing
 # Based on suggestions from https://drewstokes.com/bash-argument-parsing
 declare randomFiles=false
+declare testing=false
 declare GRID="" WORDS=""
+declare EXPECTED_TEST_HASH=""
 function parseArgs() {
   while (( "$#" )); do
     case "$1" in
@@ -70,6 +72,19 @@ function parseArgs() {
         randomFiles=true
         logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
         shift 1
+        ;;
+      # Testing option. User passes in the expected md5hash of the final filtered words file.
+      # Requires manually set grid and words files. (How else would the user know what to expect?)
+      -t|--test)
+        testing=true
+        if [ -n "${2:-}" ] && [ ${2:0:1} != "-" ]; then
+          EXPECTED_TEST_HASH="$2"
+          logDebug "Turning on testing option. EXPECTED_TEST_HASH: '${EXPECTED_TEST_HASH}'"
+          shift 2
+        else
+          logError "Error: Argument for $1 is missing" >&2
+          exit 1
+        fi
         ;;
       # Color toggling. Won't affecting logging that already happened
       --color)
@@ -133,6 +148,43 @@ function parseArgs() {
         ;;
     esac
   done
+
+  validateParsedArgs
+}
+
+function validateParsedArgs() {
+  # If testing option was set, ensure words files were also set and hash looks valid
+  logDebug "Validating parsed args"
+  if ${testing}; then
+  logDebug "Validating parsed args"
+    logDebug "  testing option was set."
+    if ${randomFiles}; then
+      logError "Validating parsed args"
+      logError "  testing option was set."
+      logError "    randomFiles option was set, but this is incompatible with testing"
+      exitCode=$((exitCode | TESTING_SETUP_ERROR))
+    fi
+    if [ -z "${GRID}" ]; then
+      logError "Validating parsed args"
+      logError "  testing option was set."
+      logError "    GRID file needs to be manually set on command-line to enable testing"
+      exitCode=$((exitCode | TESTING_SETUP_ERROR))
+    fi
+    if [ -z "${WORDS}" ]; then
+      logError "Validating parsed args"
+      logError "  testing option was set."
+      logError "    WORDS file needs to be manually set on command-line to enable testing"
+      exitCode=$((exitCode | TESTING_SETUP_ERROR))
+    fi
+    expectedHashPattern="^[a-z0-9]{32}$"
+    if [[ ! "${EXPECTED_TEST_HASH}" =~ ${expectedHashPattern} ]]; then
+      logError "Validating parsed args"
+      logError "  testing option was set."
+      logError "    The provided hash '${EXPECTED_TEST_HASH}' in invalid - it should match regex pattern '${expectedHashPattern}'"
+      exitCode=$((exitCode | TESTING_SETUP_ERROR))
+    fi
+    checkExitCode
+  fi
 }
 
 # Select an output dir to use
@@ -192,6 +244,7 @@ YELLOW_BG="$(myTput setab 3)";
     WARN_COLOR="${BRIGHT_PURPLE_FG}";
    ERROR_COLOR="${BRIGHT_RED_FG}";
    SCORE_COLOR="${YELLOW_BG}${BRIGHT_RED_FG}";
+ TESTING_COLOR="${GREEN_BG}${BRIGHT_YELLOW_FG}";
 
   logDebug "Coloring is now setup"
   setupLoggingFunctions
@@ -199,12 +252,13 @@ YELLOW_BG="$(myTput setab 3)";
 
 # Logging functions
 function setupLoggingFunctions() {
-unset -f logDebug logInfo logWarn logError logScore
+unset -f logDebug logInfo logWarn logError logScore logTesting
 function logDebug()    { if $debug;     then echo -e "${DEBUG_COLOR:-}DEBUG:"       "${@}${TPUT_RESET:-}"; fi; }
 function logInfo()     { if $info;      then echo -e "${INFO_COLOR:-}INFO:  "       "${@}${TPUT_RESET:-}"; fi; }
 function logWarn()     { if $warn;      then echo -e "${WARN_COLOR:-}WARN:  "       "${@}${TPUT_RESET:-}"; fi; }
 function logError()    { if $error;     then echo -e "${ERROR_COLOR:-}ERROR:"       "${@}${TPUT_RESET:-}"; fi; }
 function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR:-}SCORE:"       "${@}${TPUT_RESET:-}"; fi; }
+function logTesting()  {                     echo -e "${TESTING_COLOR:-}TEST:"      "${@}${TPUT_RESET:-}";     }
 
 logDebug "Logging is now setup"
 }
@@ -305,6 +359,8 @@ declare -i FILE_MISSING=1
 declare -i FILE_UNREADABLE=2
 declare -i INVALID_GRID_FILE=4
 declare -i GREP_ERROR=8
+declare -i TESTING_SETUP_ERROR=16
+declare -i TESTING_FAILED_ERROR=32
 
 # Exit if exitCode has been set, log and exit if so
 declare -i exitCode=0
@@ -853,6 +909,23 @@ function logCompletion() {
   logFilteredHitCount
 }
 
+function performTestingCheck() {
+  if ${testing}; then
+    logTesting "Performing testing check"
+    logTesting "  Checking file: '${filteredWordsFile}'"
+    foundHash="$(md5sum "${filteredWordsFile}" | awk '{print $1}')"
+    logTesting "    Expected hash: ${EXPECTED_TEST_HASH}"
+    logTesting "    Found    hash: ${foundHash}"
+    if [ "${EXPECTED_TEST_HASH}" == "${foundHash}" ]; then
+      logTesting "    Test SUCCESS"
+    else
+      logError   "    Test FAILURE - the hashes did not match"
+      exitCode=$((exitCode | TESTING_FAILED_ERROR))
+    fi
+    checkExitCode
+  fi
+}
+
 function main() {
   setupLoggingFunctions
   turnColorOn
@@ -868,6 +941,7 @@ function main() {
   performFullPathSearchFiltering
   logCompletion
   scoreWordsFile "${filteredWordsFile}"
+  performTestingCheck
 }
 
 main "${@}"
