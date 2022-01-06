@@ -302,7 +302,8 @@ function generateRandomGrid() {
       die="${shuffledDice[${idx}]}"
       clue="$(echo "${die}" | sed -e 's@ @\n@g' | shuf | head -1)"
       logDebug "Rolled die '${die}' and selected face '${clue}'"
-      line+="${clue} "
+      # Line the clues up (assuming max clue length remains 2 chars)
+      line+="$(printf "%2s " "${clue}")"
     done
     line="${line% }"
     logDebug "Appending line '${line}' to grid file"
@@ -403,7 +404,7 @@ function validateFiles() {
   fi
 
   # Verify each line looks correct (eactly 5 non-empty alphabetical clues)
-  gridLinePattern="^[a-z]+( [a-z]+){4}+\$"
+  gridLinePattern="^ *[a-z]+( +[a-z]+){4}\$"
   # Avoid grep error
   set +e
   gridAntiMatch="$(egrep -nv "${gridLinePattern}" "${GRID}")"
