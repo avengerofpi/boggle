@@ -65,7 +65,7 @@ BOGGLE_DICE_TXT="${PWD}/data/dice/sample-boggle-dice.txt"
 declare randomFiles=false
 declare GRID="" WORDS=""
 declare testing=false
-declare EXPECTED_TEST_HASH=""
+declare EXPECTED_TEST_FILE=""
 while (( "$#" )); do
   case "$1" in
     -g|--grid-file)
@@ -98,8 +98,8 @@ while (( "$#" )); do
     -t|--test)
       testing=true
       if [ -n "${2:-}" ] && [ ${2:0:1} != "-" ]; then
-        EXPECTED_TEST_HASH="$2"
-        logDebug "Turning on testing option. EXPECTED_TEST_HASH: '${EXPECTED_TEST_HASH}'"
+        EXPECTED_TEST_FILE="$2"
+        logDebug "Turning on testing option. EXPECTED_TEST_FILE: '${EXPECTED_TEST_FILE}'"
         shift 2
       else
         logError "Error: Argument for $1 is missing" >&2
@@ -279,6 +279,15 @@ if [ ! -f "${WORDS}" ]; then
   exitCode=$((exitCode | FILE_MISSING))
 elif [ ! -r "${WORDS}" ]; then
   logError "ERROR: Boggle words file '${WORDS}' exists but it cannot be read"
+  exitCode=$((exitCode | FILE_UNREADABLE))
+fi
+checkExitCode
+
+if [ ! -f "${EXPECTED_TEST_FILE}" ]; then
+  logError "ERROR: Testing expected filtered words file '${EXPECTED_TEST_FILE}' does not exist"
+  exitCode=$((exitCode | FILE_MISSING))
+elif [ ! -r "${EXPECTED_TEST_FILE}" ]; then
+  logError "ERROR: Testing expected filtered '${EXPECTED_TEST_FILE}' exists but it cannot be read"
   exitCode=$((exitCode | FILE_UNREADABLE))
 fi
 checkExitCode
@@ -737,11 +746,11 @@ scoreWordsFile "${filteredWordsFile}"
 
 if ${testing}; then
   logTesting "Performing testing check"
-  logTesting "  Checking file: '${filteredWordsFile}'"
-  foundHash="$(md5sum "${filteredWordsFile}" | awk '{print $1}')"
-  logTesting "    Expected hash: ${EXPECTED_TEST_HASH}"
-  logTesting "    Found    hash: ${foundHash}"
-  if [ "${EXPECTED_TEST_HASH}" == "${foundHash}" ]; then
+  logTesting "  Checking file: ${filteredWordsFile}"
+  logTesting "  against  file: ${EXPECTED_TEST_FILE}"
+  declare -i diffLen="$(diff "${filteredWordsFile}" "${EXPECTED_TEST_FILE}" | wc -l)"
+  logTesting "Files have '${diffLen}' lines different"
+  if [ ${diffLen} -eq 0 ]; then
     logTesting "    Test SUCCESS"
   else
     logError   "    Test FAILURE - the hashes did not match"

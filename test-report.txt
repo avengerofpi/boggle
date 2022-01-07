@@ -1,0 +1,215 @@
+8 Success
+8 Failure
+
+
+Issues: not handling multi-char clues correctly probably in a later commit
+(where I generated the "expected" values originally...)
+
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.01.txt
+  Word file: /home/cory/git/boggle/data/words/american-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.01.txt---american-english.boggle.words---filtered.txt
+
+SCORE:    151 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h29m29s---sample-boggle-grid.01.txt---american-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.01.txt---american-english.boggle.words---filtered.txt
+TEST: Files have '0' lines different
+TEST:     Test SUCCESS
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.02.txt
+  Word file: /home/cory/git/boggle/data/words/american-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.02.txt---american-english.boggle.words---filtered.txt
+
+SCORE:     55 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h29m45s---sample-boggle-grid.02.txt---american-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.02.txt---american-english.boggle.words---filtered.txt
+TEST: Files have '0' lines different
+TEST:     Test SUCCESS
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.03.txt
+  Word file: /home/cory/git/boggle/data/words/american-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.03.txt---american-english.boggle.words---filtered.txt
+
+SCORE:    157 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h29m56s---sample-boggle-grid.03.txt---american-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.03.txt---american-english.boggle.words---filtered.txt
+TEST: Files have '0' lines different
+TEST:     Test SUCCESS
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.04.txt
+  Word file: /home/cory/git/boggle/data/words/american-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.04.txt---american-english.boggle.words---filtered.txt
+
+SCORE:    163 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h30m16s---sample-boggle-grid.04.txt---american-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.04.txt---american-english.boggle.words---filtered.txt
+TEST: Files have '0' lines different
+TEST:     Test SUCCESS
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.05.txt
+  Word file: /home/cory/git/boggle/data/words/american-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.05.txt---american-english.boggle.words---filtered.txt
+
+SCORE:    121 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h30m33s---sample-boggle-grid.05.txt---american-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.05.txt---american-english.boggle.words---filtered.txt
+TEST: Files have '2' lines different
+ERROR:     Test FAILURE - the hashes did not match
+ERROR: 
+ERROR: An error was encountered. Exiting early with exit code 32
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.06.txt
+  Word file: /home/cory/git/boggle/data/words/american-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.06.txt---american-english.boggle.words---filtered.txt
+
+SCORE:     83 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h30m48s---sample-boggle-grid.06.txt---american-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.06.txt---american-english.boggle.words---filtered.txt
+TEST: Files have '4' lines different
+ERROR:     Test FAILURE - the hashes did not match
+ERROR: 
+ERROR: An error was encountered. Exiting early with exit code 32
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.07.txt
+  Word file: /home/cory/git/boggle/data/words/american-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.07.txt---american-english.boggle.words---filtered.txt
+
+SCORE:    203 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h30m56s---sample-boggle-grid.07.txt---american-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.07.txt---american-english.boggle.words---filtered.txt
+TEST: Files have '0' lines different
+TEST:     Test SUCCESS
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.08.txt
+  Word file: /home/cory/git/boggle/data/words/american-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.08.txt---american-english.boggle.words---filtered.txt
+
+SCORE:    101 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h31m15s---sample-boggle-grid.08.txt---american-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.08.txt---american-english.boggle.words---filtered.txt
+TEST: Files have '3' lines different
+ERROR:     Test FAILURE - the hashes did not match
+ERROR: 
+ERROR: An error was encountered. Exiting early with exit code 32
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.01.txt
+  Word file: /home/cory/git/boggle/data/words/international-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.01.txt---international-english.boggle.words---filtered.txt
+
+SCORE:    297 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h31m29s---sample-boggle-grid.01.txt---international-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.01.txt---international-english.boggle.words---filtered.txt
+TEST: Files have '3' lines different
+ERROR:     Test FAILURE - the hashes did not match
+ERROR: 
+ERROR: An error was encountered. Exiting early with exit code 32
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.02.txt
+  Word file: /home/cory/git/boggle/data/words/international-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.02.txt---international-english.boggle.words---filtered.txt
+
+SCORE:    187 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h32m08s---sample-boggle-grid.02.txt---international-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.02.txt---international-english.boggle.words---filtered.txt
+TEST: Files have '2' lines different
+ERROR:     Test FAILURE - the hashes did not match
+ERROR: 
+ERROR: An error was encountered. Exiting early with exit code 32
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.03.txt
+  Word file: /home/cory/git/boggle/data/words/international-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.03.txt---international-english.boggle.words---filtered.txt
+
+SCORE:    370 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h32m38s---sample-boggle-grid.03.txt---international-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.03.txt---international-english.boggle.words---filtered.txt
+TEST: Files have '0' lines different
+TEST:     Test SUCCESS
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.04.txt
+  Word file: /home/cory/git/boggle/data/words/international-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.04.txt---international-english.boggle.words---filtered.txt
+
+SCORE:    366 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h33m29s---sample-boggle-grid.04.txt---international-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.04.txt---international-english.boggle.words---filtered.txt
+TEST: Files have '0' lines different
+TEST:     Test SUCCESS
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.05.txt
+  Word file: /home/cory/git/boggle/data/words/international-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.05.txt---international-english.boggle.words---filtered.txt
+
+SCORE:    267 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h34m13s---sample-boggle-grid.05.txt---international-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.05.txt---international-english.boggle.words---filtered.txt
+TEST: Files have '4' lines different
+ERROR:     Test FAILURE - the hashes did not match
+ERROR: 
+ERROR: An error was encountered. Exiting early with exit code 32
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.06.txt
+  Word file: /home/cory/git/boggle/data/words/international-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.06.txt---international-english.boggle.words---filtered.txt
+
+SCORE:    195 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h34m49s---sample-boggle-grid.06.txt---international-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.06.txt---international-english.boggle.words---filtered.txt
+TEST: Files have '5' lines different
+ERROR:     Test FAILURE - the hashes did not match
+ERROR: 
+ERROR: An error was encountered. Exiting early with exit code 32
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.07.txt
+  Word file: /home/cory/git/boggle/data/words/international-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.07.txt---international-english.boggle.words---filtered.txt
+  
+SCORE:    436 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h35m05s---sample-boggle-grid.07.txt---international-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.07.txt---international-english.boggle.words---filtered.txt
+TEST: Files have '0' lines different
+TEST:     Test SUCCESS
+
+Running TestCase with
+  Grid file: /home/cory/git/boggle/data/grids/sample-boggle-grid.08.txt
+  Word file: /home/cory/git/boggle/data/words/international-english.boggle.words
+  Expected filtered file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.08.txt---international-english.boggle.words---filtered.txt
+
+SCORE:    259 points total
+TEST: Performing testing check
+TEST:   Checking file: /home/cory/git/boggle/tmp/2022-01-07-00h35m54s---sample-boggle-grid.08.txt---international-english.boggle.words---filtered.txt
+TEST:   against  file: /home/cory/git/boggle/data/test/words.sample-boggle-grid.08.txt---international-english.boggle.words---filtered.txt
+TEST: Files have '4' lines different
+ERROR:     Test FAILURE - the hashes did not match
+ERROR: 
+ERROR: An error was encountered. Exiting early with exit code 32
