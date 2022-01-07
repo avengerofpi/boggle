@@ -207,7 +207,7 @@ function setupOutputDir() {
 
   if [ -z "${outputDir}" ]; then
     logError "Failed to choose a usable output dir."
-    exitCode=99
+    exitCode=$((exitCode | 99))
   fi
   checkExitCode
 
@@ -363,7 +363,12 @@ declare -i GREP_ERROR=8
 declare -i TESTING_SETUP_ERROR=16
 declare -i TESTING_FAILED_ERROR=32
 
+
 # Exit if exitCode has been set, log and exit if so
+# TODO: improve exitCode values...there's more of them now and I'm not being
+#       consistent, and it might not be feasible to maintain the bit-level
+#       based logical-OR operation superposition of exitCodes I originally
+#       wanted to maintain.
 declare -i exitCode=0
 function checkExitCode() {
   if [ ${exitCode} -gt 0 ]; then
