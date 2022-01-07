@@ -8,7 +8,7 @@ set -eu
     info=true;
     warn=true;
    error=true;
-critical=true;
+scoreLog=true;
 
 # Coloration
 TPUT_RESET="$(tput sgr0)";
@@ -36,16 +36,17 @@ YELLOW_BG="$(tput setab 3)";
     INFO_COLOR="${BRIGHT_YELLOW_FG}";
     WARN_COLOR="${BRIGHT_PURPLE_FG}";
    ERROR_COLOR="${BRIGHT_RED_FG}";
-CRITICAL_COLOR="${YELLOW_BG}${BRIGHT_RED_FG}";
-  HEADER_COLOR="${YELLOW_BG}${BRIGHT_RED}";
+   SCORE_COLOR="${YELLOW_BG}${BRIGHT_RED_FG}";
+ TESTING_COLOR="${GREEN_BG}${BRIGHT_YELLOW_FG}";
 
 # Logging functions
 function logDebug()    { if $debug;     then echo -e "${DEBUG_COLOR}DEBUG:"       "${@}${TPUT_RESET}"; fi; }
 function logInfo()     { if $info;      then echo -e "${INFO_COLOR}INFO:"         "${@}${TPUT_RESET}"; fi; }
 function logWarn()     { if $warn;      then echo -e "${WARN_COLOR}WARN:"         "${@}${TPUT_RESET}"; fi; }
 function logError()    { if $error;     then echo -e "${ERROR_COLOR}ERROR:"       "${@}${TPUT_RESET}"; fi; }
-function logCritical() { if $critical;  then echo -e "${CRITICAL_COLOR}CRITICAL:" "${@}${TPUT_RESET}"; fi; }
-function logHeader()   {                     echo -e "${HEADER_COLOR}"            "${@}${TPUT_RESET}"; }
+function logScore()    { if $scoreLog;  then echo -e "${SCORE_COLOR:-}SCORE:"       "${@}${TPUT_RESET:-}"; fi; }
+function logTesting()  {                     echo -e "${TESTING_COLOR:-}TEST:"      "${@}${TPUT_RESET:-}";     }
+
 
 # Declare some files for later selection
 GRID_FILES=(
@@ -63,6 +64,8 @@ BOGGLE_DICE_TXT="${PWD}/data/dice/sample-boggle-dice.txt"
 #declare PARAMS=""
 declare randomFiles=false
 declare GRID="" WORDS=""
+declare testing=false
+declare EXPECTED_TEST_HASH=""
 while (( "$#" )); do
   case "$1" in
     -g|--grid-file)
@@ -88,6 +91,61 @@ while (( "$#" )); do
     -r|--random-files)
       randomFiles=true
       logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
+      shift 1
+      ;;
+    # Testing option. User passes in the expected md5hash of the final filtered words file.
+    # Requires manually set grid and words files. (How else would the user know what to expect?)
+    -t|--test)
+      testing=true
+      if [ -n "${2:-}" ] && [ ${2:0:1} != "-" ]; then
+        EXPECTED_TEST_HASH="$2"
+        logDebug "Turning on testing option. EXPECTED_TEST_HASH: '${EXPECTED_TEST_HASH}'"
+        shift 2
+      else
+        logError "Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
+      ;;
+    # Turn logging options on
+    --debug)
+      debug=true
+      shift 1
+      ;;
+    --info)
+      info=true
+      shift 1
+      ;;
+    --warn)
+      warn=true
+      shift 1
+      ;;
+    --error)
+      error=true
+      shift 1
+      ;;
+    --score)
+      scoreLog=true
+      shift 1
+      ;;
+    # Turn logging options off
+    --no-debug)
+      debug=false
+      shift 1
+      ;;
+    --no-info)
+      info=false
+      shift 1
+      ;;
+    --no-warn)
+      warn=false
+      shift 1
+      ;;
+    --no-error)
+      error=false
+      shift 1
+      ;;
+    --no-score)
+      scoreLog=false
       shift 1
       ;;
     -*|--*=) # unsupported flags
@@ -155,7 +213,6 @@ WORDS_PROMPT="Choose the words file to use: "
 # Select grid file
 if [ -z "${GRID}" ]; then
   if ${randomFiles}; then
-    #GRID="$(for f in "${GRID_FILES[@]}"; do echo "${f}"; done | shuf | head -1)"
     generateRandomGrid
   else
     PS3="${GRID_PROMPT}"
@@ -166,8 +223,10 @@ if [ -z "${GRID}" ]; then
         echo "Try again. Focus!"
       fi
     done
+  cp "${GRID}" "${outputDir}"
   fi
 fi
+
 # Select words file
 if [ -z "${WORDS}" ]; then
   if ${randomFiles}; then
@@ -191,6 +250,8 @@ declare -i FILE_MISSING=1
 declare -i FILE_UNREADABLE=2
 declare -i INVALID_GRID_FILE=4
 declare -i GREP_ERROR=8
+declare -i TESTING_SETUP_ERROR=16
+declare -i TESTING_FAILED_ERROR=32
 
 # Exit if exitCode has been set, log and exit if so
 function checkExitCode() {
@@ -232,7 +293,7 @@ if [ ${numLines} -ne ${EXPECTED_NUM_LINES} ]; then
 fi
 
 # Verify each line looks correct (eactly 5 non-empty alphabetical clues)
-gridLinePattern="^[a-z]+( [a-z]+){4}+\$"
+gridLinePattern="^ *[a-z]+( +[a-z]+){4}\$"
 # Avoid grep error
 set +e
 gridAntiMatch="$(egrep -nv "${gridLinePattern}" "${GRID}")"
@@ -657,8 +718,10 @@ function scoreWordsFile() {
     logInfo "${outStr}"
     score+=${inc}
   done
+  scoreString="$(printf "%4d points total" "${score}")"
   logInfo
-  logInfo "  ${score} points total"
+  logInfo "  ${scoreString} $(basename "${filteredWordsFile}")"
+  logScore "  ${scoreString}"
 }
 
 echo
@@ -671,3 +734,18 @@ logFilteredHitCount
 declare -i score=0
 logInfo
 scoreWordsFile "${filteredWordsFile}"
+
+if ${testing}; then
+  logTesting "Performing testing check"
+  logTesting "  Checking file: '${filteredWordsFile}'"
+  foundHash="$(md5sum "${filteredWordsFile}" | awk '{print $1}')"
+  logTesting "    Expected hash: ${EXPECTED_TEST_HASH}"
+  logTesting "    Found    hash: ${foundHash}"
+  if [ "${EXPECTED_TEST_HASH}" == "${foundHash}" ]; then
+    logTesting "    Test SUCCESS"
+  else
+    logError   "    Test FAILURE - the hashes did not match"
+    exitCode=$((exitCode | TESTING_FAILED_ERROR))
+  fi
+  checkExitCode
+fi
