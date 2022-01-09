@@ -42,7 +42,7 @@ function turnColorOff() {
 declare randomFiles=false
 declare testing=false
 declare GRID="" WORDS=""
-declare EXPECTED_TEST_HASH=""
+declare EXPECTED_TEST_FILE=""
 function parseArgs() {
   while (( "$#" )); do
     case "$1" in
@@ -73,13 +73,13 @@ function parseArgs() {
         logDebug "Choosing random files instead of prompting user (unless file was chosen by another argument)"
         shift 1
         ;;
-      # Testing option. User passes in the expected md5hash of the final filtered words file.
-      # Requires manually set grid and words files. (How else would the user know what to expect?)
+      # Testing option. User passes in the name of a files contained the expected final words list to compare against.
+      # Requires the user to manually set grid and words files. (How else would the user know what to expect?)
       -t|--test)
         testing=true
         if [ -n "${2:-}" ] && [ ${2:0:1} != "-" ]; then
-          EXPECTED_TEST_HASH="$2"
-          logDebug "Turning on testing option. EXPECTED_TEST_HASH: '${EXPECTED_TEST_HASH}'"
+          EXPECTED_TEST_FILE="$2"
+          logDebug "Turning on testing option. EXPECTED_TEST_FILE: '${EXPECTED_TEST_FILE}'"
           shift 2
         else
           logError "Error: Argument for $1 is missing" >&2
@@ -153,7 +153,7 @@ function parseArgs() {
 }
 
 function validateParsedArgs() {
-  # If testing option was set, ensure words files were also set and hash looks valid
+  # If testing option was set, ensure files were also set
   logDebug "Validating parsed args"
   if ${testing}; then
   logDebug "Validating parsed args"
@@ -176,12 +176,17 @@ function validateParsedArgs() {
       logError "    WORDS file needs to be manually set on command-line to enable testing"
       exitCode=$((exitCode | TESTING_SETUP_ERROR))
     fi
-    expectedHashPattern="^[a-z0-9]{32}$"
-    if [[ ! "${EXPECTED_TEST_HASH}" =~ ${expectedHashPattern} ]]; then
+    # Check testing file
+    if [ ! -f "${EXPECTED_TEST_FILE}" ]; then
       logError "Validating parsed args"
       logError "  testing option was set."
-      logError "    The provided hash '${EXPECTED_TEST_HASH}' in invalid - it should match regex pattern '${expectedHashPattern}'"
-      exitCode=$((exitCode | TESTING_SETUP_ERROR))
+      logError "    Testing expected filtered words file '${EXPECTED_TEST_FILE}' does not exist"
+      exitCode=$((exitCode | FILE_MISSING))
+    elif [ ! -r "${EXPECTED_TEST_FILE}" ]; then
+      logError "Validating parsed args"
+      logError "  testing option was set."
+      logError "    Testing expected filtered words file '${EXPECTED_TEST_FILE}' exists but it cannot be read"
+      exitCode=$((exitCode | FILE_UNREADABLE))
     fi
     checkExitCode
   fi
@@ -919,13 +924,13 @@ function performTestingCheck() {
   if ${testing}; then
     logTesting "Performing testing check"
     logTesting "  Checking file: '${filteredWordsFile}'"
-    foundHash="$(md5sum "${filteredWordsFile}" | awk '{print $1}')"
-    logTesting "    Expected hash: ${EXPECTED_TEST_HASH}"
-    logTesting "    Found    hash: ${foundHash}"
-    if [ "${EXPECTED_TEST_HASH}" == "${foundHash}" ]; then
+    logTesting "  against  file: ${EXPECTED_TEST_FILE}"
+    declare -i diffLen="$(diff "${filteredWordsFile}" "${EXPECTED_TEST_FILE}" | wc -l)"
+    logTesting "Diff between files has '${diffLen}' lines"
+    if [ ${diffLen} -eq 0 ]; then
       logTesting "    Test SUCCESS"
     else
-      logError   "    Test FAILURE - the hashes did not match"
+      logError   "    Test FAILURE - the files did not match"
       exitCode=$((exitCode | TESTING_FAILED_ERROR))
     fi
     checkExitCode
