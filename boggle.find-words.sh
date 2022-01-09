@@ -660,6 +660,14 @@ declare -a pathObjects=()
 declare -a wordSuccessfulPaths=()
 # Map from prefixes (of words) to string-encoded space-delimited arrays of paths
 # e.g., prefixToPathMap["inni"]="112122 42524334"
+#
+# BUG:
+#   If there is a multi-char clue, the prefixToPathMap will sometimes (always?) cause
+#     us to skip over words/paths starting with that clue
+#   More than that, take 'shier' for grid file 2 and international word. The prefix
+#     'shie' is found but the paths for 'shie' cannot be extended to 'shier', yet there
+#     is a path for 'shier' that uses a 2-char clue 'er'
+#
 declare -A prefixToPathMap
 function initCheckWordVars() {
   len=${#word}
