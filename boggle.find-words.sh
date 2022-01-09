@@ -747,8 +747,10 @@ function extendSinglePathByCluesOfLengthN() {
             logDebug "            Appending '${newPathObject}' to wordSuccessfulPaths"
             wordSuccessfulPaths+=("${newPathObject}")
             # For now, stop at the first successful path rather than trying to find all paths
-            # CANCEL THE SHORT-CIRCUIT HERE, so we can grab all the "prefix paths"
-            #break
+            # TODO: For this final relatively compute-intensive step,
+            #       try seeing we can do a depth-first constructive search
+            #       instead of breadth-first constructive search.
+            break
           else
             logDebug "          This path does NOT complete the target word"
             logDebug "            Appending '${newPathObject}' to newPathObjects"
