@@ -32,7 +32,7 @@ function runTestCase() {
   echo "  Grid file: ${1}"
   echo "  Word file: ${2}"
   echo "  Expected filtered file: ${3}"
-  ./boggle.find-words.sh -g "${1}" -w "${2}" --no-info --no-debug --test "${3}"
+  time ./boggle.find-words.sh -g "${1}" -w "${2}" --no-info --no-debug --test "${3}"
   echo
 }
 
