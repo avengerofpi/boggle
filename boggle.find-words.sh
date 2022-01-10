@@ -337,9 +337,9 @@ function promptUserForGridAndWordFiles() {
           echo "Try again. Focus!"
         fi
       done
-    cp "${GRID}" "${outputDir}"
     fi
   fi
+  cp "${GRID}" "${outputDir}"
 
   # Select words file
   if [ -z "${WORDS}" ]; then
@@ -443,11 +443,20 @@ function logFilteredHitCount() {
 # Create writable copy of selected words file.
 # We will filter on this copy rather than on the original.
 declare filteredWordsFile=""
+declare filteredWordsFileOrig=""
+declare filteredWordsFile2=""
+declare filteredWordsFile3=""
+declare filteredWordsFile4=""
 function createInitialFilteredWordsFile() {
   gridBasename="$(basename "${GRID}")"
   wordsBasename="$(basename "${WORDS}")"
   filteredWordsFile="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered.txt"
+  filteredWordsFile2="${filteredWordsFile}2"
+  filteredWordsFile3="${filteredWordsFile}3"
+  filteredWordsFile4="${filteredWordsFile}4"
+  filteredWordsFileOrig="${filteredWordsFile}.orig"
   logInfo "Saving filtered words to file: ${filteredWordsFile}"
+  cp "${WORDS}" "${filteredWordsFileOrig}"
   cp "${WORDS}" "${filteredWordsFile}"
   chmod u+w "${filteredWordsFile}"
   logFilteredHitCount
@@ -507,6 +516,7 @@ function performClueCountsFiltering() {
     logDebug "checkPattern: '${checkPattern}'"
     sed -i -e "/${checkPattern}/d" "${filteredWordsFile}"
   done
+  cp "${filteredWordsFile}" "${filteredWordsFile2}"
   logDebug "Second pass filter ensuring no char/clue occurs too many times"
   logFilteredHitCount
 }
@@ -521,7 +531,6 @@ function performClueCountsFiltering() {
 # denotiving value CLUE_VALUE at row i, column j, 1 <= i,j <= 5
 # The 5x5 structure of the grid file, and the validity of clues, should already
 # have been verified elsewhere.
-declare filteredWordsFile2=""
 function performAdjacentCluesFiltering() {
   declare -i i=1
   # Map from "ij" -> "<clue at row i, col j>"
@@ -603,16 +612,15 @@ function performAdjacentCluesFiltering() {
 
   # Apply the new filter pattern
   # TODO: centralize the definition/declaration of all filtered word list files
-  filteredWordsFile2="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered2.txt"
   set +e
-  egrep "${pattern2}" "${filteredWordsFile}" | egrep "${pattern3}" > "${filteredWordsFile2}"
+  egrep "${pattern2}" "${filteredWordsFile}" | egrep "${pattern3}" > "${filteredWordsFile3}"
   if [ $? -eq 2 ]; then
     logError "There was an error with the grep command just run"
     exitCode=$((exitCode | GREP_ERROR))
   fi
   checkExitCode
   set -e
-  mv "${filteredWordsFile2}" "${filteredWordsFile}"
+  cp "${filteredWordsFile3}" "${filteredWordsFile}"
   logFilteredHitCount
 }
 
@@ -780,6 +788,11 @@ function extendPaths() {
     pos=${pathLen}
     logDebug "Inspecting partial path '${path}' of length '${pos}' (${prefix}) for word '${word}'"
     for N in {1..2}; do
+      if [ ${#wordSuccessfulPaths[@]} -gt 0 ]; then
+        logDebug "  A path for word '${word}' has been found. Stopping search"
+        newPathObjects=()
+        break 2
+      fi
       if [ ${pathLen} -le $((len-N)) ]; then
         extendSinglePathByCluesOfLengthN
       else
@@ -817,7 +830,7 @@ function checkWordAgainstGrid() {
   if [ ${numWordSuccessfulPaths} -gt 0 ]; then
     logDebug "SUCCESS - found ${numWordSuccessfulPaths} valid paths for '${word}'"
     logDebug "${word}"
-    echo "${word}" >> "${filteredWordsFile2}"
+    echo "${word}" >> "${filteredWordsFile4}"
   else
     logDebug "FAILURE - no paths found for word '${word}'"
   fi
@@ -825,15 +838,13 @@ function checkWordAgainstGrid() {
 }
 
 # Loop over words (lines) in words files
-# Reuse filteredWordsFil2
 function performFullPathSearchFiltering() {
   touch "${filteredWordsFile2}"
   while read word; do
     checkWordAgainstGrid
   done < <(cat "${filteredWordsFile}")
   # TODO: maintain iterative sequence of these filtered word lists better
-  mv "${filteredWordsFile}" "${filteredWordsFile}.penultimate"
-  mv "${filteredWordsFile2}" "${filteredWordsFile}"
+  cp "${filteredWordsFile4}" "${filteredWordsFile}"
 }
 
 # Score a words file
