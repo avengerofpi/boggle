@@ -839,7 +839,7 @@ function checkWordAgainstGrid() {
 
 # Loop over words (lines) in words files
 function performFullPathSearchFiltering() {
-  touch "${filteredWordsFile2}"
+  setupGridMap
   while read word; do
     checkWordAgainstGrid
   done < <(cat "${filteredWordsFile}")
@@ -912,7 +912,6 @@ function main() {
   createInitialFilteredWordsFile
   performClueCountsFiltering
   performAdjacentCluesFiltering
-  setupGridMap
   performFullPathSearchFiltering
   logCompletion
   scoreWordsFile "${filteredWordsFile}"
