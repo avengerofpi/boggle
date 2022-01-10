@@ -547,7 +547,7 @@ function performAdjacentCluesFiltering() {
     gridCoorToValueMap["${i}5"]="${i5}"
     logDebug "${i}1=${gridCoorToValueMap[${i}1]} ${i}2=${gridCoorToValueMap[${i}2]} ${i}3=${gridCoorToValueMap[${i}3]} ${i}4=${gridCoorToValueMap[${i}4]} ${i}5=${gridCoorToValueMap[${i}5]}"
     i+=1
-  done < <(cat "${GRID}")
+  done < "${GRID}"
   logDebug "Grid file contains (reminder/for comparison):"
   logDebug "\n$(cat "${GRID}")"
 
@@ -652,7 +652,7 @@ function setupGridMap() {
     logDebug "  ${i4} -> '${gridMap[${i4}]}'"
     logDebug "  ${i5} -> '${gridMap[${i5}]}'"
     i+=1
-  done < <(cat "${GRID}")
+  done < "${GRID}"
   logDebug "Final gridMap contents:"
   for clue in "${!gridMap[@]}"; do
     logDebug "  ${clue} -> '${gridMap[${clue}]}'"
@@ -845,7 +845,7 @@ function performFullPathSearchFiltering() {
   setupGridMap
   while read word; do
     checkWordAgainstGrid
-  done < <(cat "${filteredWordsFile}")
+  done < "${filteredWordsFile}"
   # TODO: maintain iterative sequence of these filtered word lists better
   cp "${filteredWordsFile4}" "${filteredWordsFile}"
 }
