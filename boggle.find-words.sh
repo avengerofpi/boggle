@@ -491,6 +491,13 @@ function performClueCountsFiltering() {
   logDebug "counts: '${clueCnts[@]}'"
 
   # Now process each clue.
+  # TODO:
+  # BUG:  Multi-char clues (at least) are not being handeled correctly. For
+  #       example, if 'an' is a clue but there are no 'a' clues, then when we
+  #       check for "too many hits again clue 'a'" we will omit all words
+  #       containing 'a' (and thus any containing 'an' in particular) b/c the
+  #       logic below doesn't account for the multi-char clues when examining
+  #       single-char clues)
   for clue in "${!clueCnts[@]}"; do
     clueCnt="${clueCnts[${clue}]}"
     logDebug "Checking for too many hits against clue '${clue}' (cnt: '${clueCnt}')"
@@ -750,6 +757,7 @@ function extendSinglePathByCluesOfLengthN() {
           # If all checks passed, append the extended path to newPathObjects array
           newPathFound=true
           declare newPath="${path}${nextPosition}"
+          # TODO: check, should this be "+1" or "+N" ???
           declare -i newPathLen=$((pathLen+1))
           newPathObject="${newPath} ${newPathLen} ${newPrefix}"
           logDebug "        SUCCESS - path extension FOUND: '${pathObj}' -> '${newPathObject}'"
