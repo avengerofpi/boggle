@@ -325,9 +325,11 @@ function promptUserForGridAndWordFiles() {
   GRID_PROMPT="Choose the grid file to use: "
   WORDS_PROMPT="Choose the words file to use: "
   # Select grid file
+  createGridCopy=true
   if [ -z "${GRID}" ]; then
     if ${randomFiles}; then
       generateRandomGrid
+      createGridCopy=false
     else
       PS3="${GRID_PROMPT}"
       select GRID in "${GRID_FILES[@]}"; do
@@ -339,7 +341,9 @@ function promptUserForGridAndWordFiles() {
       done
     fi
   fi
-  cp "${GRID}" "${outputDir}"
+  if ${createGridCopy}; then
+    cp "${GRID}" "${outputDir}"
+  fi
 
   # Select words file
   if [ -z "${WORDS}" ]; then
@@ -443,7 +447,6 @@ function logFilteredHitCount() {
 # Create writable copy of selected words file.
 # We will filter on this copy rather than on the original.
 declare filteredWordsFile=""
-declare filteredWordsFileOrig=""
 declare filteredWordsFile2=""
 declare filteredWordsFile3=""
 declare filteredWordsFile4=""
@@ -456,7 +459,7 @@ function createInitialFilteredWordsFile() {
   filteredWordsFile4="${filteredWordsFile}4"
   filteredWordsFileOrig="${filteredWordsFile}.orig"
   logInfo "Saving filtered words to file: ${filteredWordsFile}"
-  cp "${WORDS}" "${filteredWordsFileOrig}"
+  cp "${WORDS}" "${outputDir}"
   cp "${WORDS}" "${filteredWordsFile}"
   chmod u+w "${filteredWordsFile}"
   logFilteredHitCount
