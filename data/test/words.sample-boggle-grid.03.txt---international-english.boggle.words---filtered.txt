@@ -98,6 +98,8 @@ praus
 pruta
 psoae
 psoas
+quads
+quest
 ramus
 rapid
 rapids

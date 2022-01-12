@@ -472,42 +472,56 @@ function createInitialFilteredWordsFile() {
 # 'i' and 'n', then it may be possible (depending on the actual grid) for 'in'
 # to occur more than once.
 function performClueCountsFiltering() {
+  # Count the frequency of each complete clue
   declare -A clueCnts
+  # Count the frequency of each char (e.g., if "inn" is a clue, it increases
+  # the total for 'i' by one (1) and the total for 'n' by two (2)
+  declare -A charCnts
   for c in {a..z}; do
     clueCnts["${c}"]="0";
+    charCnts["${c}"]="0";
   done
-  # In order to udpate the array clueCnts from within the while loop, use process
+  # In order to udpate the arrays from within the while loop, use process
   # substitution instead of a pipeline
   # https://stackoverflow.com/questions/9985076/bash-populate-an-array-in-loop
   #   "Every command in a pipeline receives a copy of the shell's execution
   #     environment, so a while loop would populate a copy of the array, and when
   #     the while loop completes, that copy disappears"
+  # clueCnts:
   while read cnt clue; do
     logDebug "Found clue '${clue}' (cnt: '${cnt}')"
     clueCnts["${clue}"]="${cnt}"
   done < <(sed -e 's@\(\<[a-z]\)@\n\1@g' -e 's@ @\n@g' "${GRID}" | grep '[a-z]' | sort | uniq -c)
+  # charCnts:
+  while read cnt char; do
+    logDebug "Found clue '${char}' (cnt: '${cnt}')"
+    charCnts["${char}"]="${cnt}"
+  done < <(sed -e 's@\(.\)@\n\1@g' "${GRID}" | grep '[a-z]' | sort | uniq -c)
 
+  logDebug
   logDebug "clues:  '${!clueCnts[@]}'"
   logDebug "counts: '${clueCnts[@]}'"
+  logDebug
+  logDebug "chars:  '${!charCnts[@]}'"
+  logDebug "counts: '${charCnts[@]}'"
 
   # Now process each clue.
-  # TODO:
-  # BUG:  Multi-char clues (at least) are not being handeled correctly. For
-  #       example, if 'an' is a clue but there are no 'a' clues, then when we
-  #       check for "too many hits again clue 'a'" we will omit all words
-  #       containing 'a' (and thus any containing 'an' in particular) b/c the
-  #       logic below doesn't account for the multi-char clues when examining
-  #       single-char clues)
   for clue in "${!clueCnts[@]}"; do
-    clueCnt="${clueCnts[${clue}]}"
-    logDebug "Checking for too many hits against clue '${clue}' (cnt: '${clueCnt}')"
+    logDebug "Checking for too many hits against clue '${clue}'"
     # If clue is multi-char, check the individual chars cnts in case they all
     # occur individually Note that if I were to properly handle arbitrary
     # length or number of multi-char clues, I'd need to check all possible ways
     # to build each multi-char clue from others
     declare -i clueLen="${#clue}"
-    declare -i maxExtraHits=0
-    if [ "${clueLen}" -gt 1 ]; then
+    declare -i maxHits=0
+    if [ "${clueLen}" -eq 1 ]; then
+      logDebug "  This is a single-char clue, it has '${clueLen}' chars"
+      declare char="${clue}"
+      maxHits=${charCnts[${char}]}
+      logDebug "  This char occurs '${maxHits}' times amongst all clues in the grid"
+    else
+      declare -i maxExtraHits=0
+      declare -i clueCnt="${clueCnts[${clue}]}"
       logDebug "  This is a multi-char clue, it has '${clueLen}' chars"
       for i in $(seq 0 $((clueLen - 1))); do
         c="${clue:${i}:1}"
@@ -518,10 +532,10 @@ function performClueCountsFiltering() {
           logDebug "    Updating maxExtraHits to '${maxExtraHits}'"
         fi
       done
+      maxHits=${clueCnt}+${maxExtraHits}
+      logDebug "  maxHits for this multi-char clue: '${maxHits}'"
     fi
-    declare -i maxHits=${clueCnt}+${maxExtraHits}
     declare -i excessiveHits=${maxHits}+1
-    logDebug "  maxHits: '${maxHits}'"
     checkPattern="^\(.*${clue}\)\{${excessiveHits},\}"
     logDebug "checkPattern: '${checkPattern}'"
     sed -i -e "/${checkPattern}/d" "${filteredWordsFile}"

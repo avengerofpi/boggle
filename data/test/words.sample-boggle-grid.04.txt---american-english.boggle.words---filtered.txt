@@ -51,6 +51,7 @@ ford
 fords
 frat
 from
+heeds
 iowa
 irate
 mess
@@ -81,6 +82,8 @@ sear
 seat
 semi
 semis
+shed
+shes
 taco
 tads
 taro

@@ -12,6 +12,7 @@ g05="${PWD}/data/grids/sample-boggle-grid.05.txt"
 g06="${PWD}/data/grids/sample-boggle-grid.06.txt"
 g07="${PWD}/data/grids/sample-boggle-grid.07.txt"
 g08="${PWD}/data/grids/sample-boggle-grid.08.txt"
+g09="${PWD}/data/grids/sample-boggle-grid.09.txt"
 
 # Words files
 wAme="${PWD}/data/words/american-english.boggle.words"
@@ -37,7 +38,7 @@ function runTestCase() {
 }
 
 for wType in "american" "international"; do
-  for gi in {01..08}; do
+  for gi in {01..09}; do
     g="${PWD}/data/grids/sample-boggle-grid.${gi}.txt"
     w="${PWD}/data/words/${wType}-english.boggle.words"
     t="${PWD}/data/test/words.sample-boggle-grid.${gi}.txt---${wType}-english.boggle.words---filtered.txt"

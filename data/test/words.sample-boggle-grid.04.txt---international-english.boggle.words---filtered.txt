@@ -111,6 +111,8 @@ frater
 fraters
 from
 frow
+heeds
+hemes
 irade
 irades
 irate
@@ -172,6 +174,8 @@ semi
 semis
 sers
 seta
+shed
+shes
 taco
 tads
 taed
