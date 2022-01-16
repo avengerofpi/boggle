@@ -505,17 +505,23 @@ function performCharCountsFiltering() {
   logFilteredHitCount
 }
 
-# Now filter using pairs of adjacent clues. Form a regex of all such pairs and
-# ensure each word is built from a sequence of these, with the option to have a
-# another single clue in there (words must be built from either an odd number
-# of clues or an even number of clue).
+# Now filter using clue paths, composing base patterns derived all possible
+# 3-clue, 2-clue, and 1-clues path paths into robust patterns that all valid
+# words must satisify. There will still be potential false positives that make
+# it through, but a large probabilistic majority of candidate words should be
+# filtered out. This will help make the downstream computationally expensive
+# path-finding search/filter faster.
+# Note that this works since currently all words are at least 4 chars long and
+# currently all clues are 1-char except for a single 2-char clue. If we allow
+# for longer clues or multiple 2-char clues, or if we allow shorter words, the
+# following filtering will stop being valid.
 
-# First, read the grid into an associative array with keys/value pairs of the form
-#   ij=CLUE_VALUE
-# denotiving value CLUE_VALUE at row i, column j, 1 <= i,j <= 5
-# The 5x5 structure of the grid file, and the validity of clues, should already
-# have been verified elsewhere.
 function performAdjacentCluesFiltering() {
+  # First, read the grid into an associative array with keys/value pairs of the form
+  #   ij=CLUE_VALUE
+  # denotiving value CLUE_VALUE at row i, column j, 1 <= i,j <= 5
+  # The 5x5 structure of the grid file, and the validity of clues, should already
+  # have been verified elsewhere.
   declare -i i=1
   # Map from "ij" -> "<clue at row i, col j>"
   declare -A gridCoorToValueMap
@@ -532,19 +538,27 @@ function performAdjacentCluesFiltering() {
   logDebug "Grid file contains (reminder/for comparison):"
   logDebug "\n$(cat "${GRID}")"
 
-  # Start building the possible sub-patterns from pairs of clues
+  # Extract the patterns for all 2-clue paths
   declare -i i j
-  regexFile="${outputDir}/regex-list.${gridBasename}.txt"
-  touch "${regexFile}"
-  logDebug "Creating regex file '${regexFile}'"
-  logDebug "  For now it will just contain patterns composed from pairs of adjacent clues"
+  twoCluePathRegexFile="${outputDir}/two-clue-path.regex-list.${gridBasename}.txt"
+  touch "${twoCluePathRegexFile}"
+  logDebug "Creating regex file '${twoCluePathRegexFile}'"
+  logDebug "  It will contain patterns composed from two clues that form a valid path"
+  function addPattern2char() {
+    logDebug "${pattern}"
+    echo "${pattern}" >> "${twoCluePathRegexFile}"
+  }
+  function forwardsAndBackwards2char() {
+    pattern="${a}${b}"; addPattern2char
+    pattern="${b}${a}"; addPattern2char
+    logDebug
+  }
   # Horizontal pairs
   for i in {1..5}; do
     for j in {1..4}; do
       a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
       b="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
-      echo "${a}${b}" >> "${regexFile}"
-      echo "${b}${a}" >> "${regexFile}"
+      forwardsAndBackwards2char
     done
   done
   # Vertical pairs
@@ -552,8 +566,7 @@ function performAdjacentCluesFiltering() {
     for j in {1..5}; do
       a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
       b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
-      echo "${a}${b}" >> "${regexFile}"
-      echo "${b}${a}" >> "${regexFile}"
+      forwardsAndBackwards2char
     done
   done
   # Forward diagonal pairs
@@ -561,8 +574,7 @@ function performAdjacentCluesFiltering() {
     for j in {1..4}; do
       a="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
       b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
-      echo "${a}${b}" >> "${regexFile}"
-      echo "${b}${a}" >> "${regexFile}"
+      forwardsAndBackwards2char
     done
   done
   # Backward diagonal pairs
@@ -570,36 +582,327 @@ function performAdjacentCluesFiltering() {
     for j in {1..4}; do
       a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
       b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
-      echo "${a}${b}" >> "${regexFile}"
-      echo "${b}${a}" >> "${regexFile}"
+      forwardsAndBackwards2char
     done
   done
 
-  # Construct regex
-  # Only handles single-char and double-char clues correctly and only when exactly one double-char clue
-  # occurs in the grid (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
-  # generalize to clue lengths > 2 chars or to multiple double-char clues, this logic will need changing.
+  # Extract the patterns for all 3-clue paths
+  declare -i i j
+  threeCluePathRegexFile="${outputDir}/three-clue-path.regex-list.${gridBasename}.txt"
+  touch "${threeCluePathRegexFile}"
+  logDebug "Creating regex file '${threeCluePathRegexFile}'"
+  logDebug "  It will contain patterns composed from three clues that form a valid path"
+  function addPattern3char() {
+    logDebug "${pattern}"
+    echo "${pattern}" >> "${threeCluePathRegexFile}"
+  }
+  function forwardsAndBackwards3char() {
+    pattern="${a}${b}${c}"; addPattern3char
+    pattern="${c}${b}${a}"; addPattern3char
+    logDebug
+  }
+  function permutations3char() {
+    pattern="${a}${b}${c}"; addPattern3char
+    pattern="${a}${c}${b}"; addPattern3char
+    pattern="${b}${a}${c}"; addPattern3char
+    pattern="${b}${c}${a}"; addPattern3char
+    pattern="${c}${a}${b}"; addPattern3char
+    pattern="${c}${b}${a}"; addPattern3char
+    logDebug
+  }
+  # Shapes: 'o' means part of the path; 'x' means not part of the path
+  # o o o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..5}; do
+    for j in {1..3}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+0))$((j+2))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  # o
+  # o
+  # o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..3}; do
+    for j in {1..5}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      c="${gridCoorToValueMap["$((i+2))$((j+0))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+
+  # o o
+  #     o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..3}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+1))$((j+2))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  #     o
+  # o o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..3}; do
+      a="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+0))$((j+2))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  # o   o
+  #   o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..3}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+0))$((j+2))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  #   o
+  # o   o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..3}; do
+      a="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+1))$((j+2))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  # o
+  #   o o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..3}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+1))$((j+2))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  #   o o
+  # o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..3}; do
+      a="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+0))$((j+2))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+
+  #   o
+  # o
+  # o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..3}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      c="${gridCoorToValueMap["$((i+2))$((j+0))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  # o
+  #   o
+  #   o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..3}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+2))$((j+1))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  # o
+  #   o
+  # o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..3}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+2))$((j+0))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  #   o
+  # o
+  #   o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..3}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      c="${gridCoorToValueMap["$((i+2))$((j+1))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  #   o
+  #   o
+  # o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..3}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+2))$((j+0))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  # o
+  # o
+  #   o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..3}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      c="${gridCoorToValueMap["$((i+2))$((j+1))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+
+  # o
+  #   o
+  #     o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..3}; do
+    for j in {1..3}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+2))$((j+2))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+  #     o
+  #   o
+  # o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..3}; do
+    for j in {1..3}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+2))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+2))$((j+0))"]}"
+      forwardsAndBackwards3char
+    done
+  done
+  logDebug
+
+  #   o
+  # o o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      c="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      permutations3char
+    done
+  done
+  logDebug
+  # o
+  # o o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      c="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      permutations3char
+    done
+  done
+  logDebug
+  # o o
+  # o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+1))$((j+0))"]}"
+      permutations3char
+    done
+  done
+  logDebug
+  # o o
+  #   o
+  # Just forward and backward; no arbitary permutations
+  for i in {1..4}; do
+    for j in {1..4}; do
+      a="${gridCoorToValueMap["$((i+0))$((j+0))"]}"
+      b="${gridCoorToValueMap["$((i+0))$((j+1))"]}"
+      c="${gridCoorToValueMap["$((i+1))$((j+1))"]}"
+      permutations3char
+    done
+  done
+  logDebug
+
+  # Compose the extracted sets of 1-clue, 2-clue, and 3-clue path patterns into
+  # their respective 1-clue, 2-clue, and 3-clue regular expressions.  Then
+  # compose these together into a handful of robust patterns that all valid
+  # words must be able to pass. False positives may make it through so further,
+  # even more robust filtering/testing will be required.
   singleLetterClues=$(sed -e 's@\<[a-z]\{2,\}\>@@g' -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @@g')
   multiLetterClues=$( sed -e 's@\<[a-z]\>@@g'       -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @|@g')
   singleCluePattern_all="([${singleLetterClues}]|${multiLetterClues})"
-  doubleCluePattern_all="($(sort "${regexFile}" |  xargs | sed -e 's@ @|@g'))"
+  doubleCluePattern_all="($(sort "${twoCluePathRegexFile}"   |  xargs | sed -e 's@ @|@g'))"
+  tripleCluePattern_all="($(sort "${threeCluePathRegexFile}" |  xargs | sed -e 's@ @|@g'))"
+
+  # Compose 2-clues patterns together, allowing for an optional additional
+  # 1-clue pattern since words may require an even or odd number of clues.
   pattern2="^${doubleCluePattern_all}+${singleCluePattern_all}?$"
   pattern3="^${singleCluePattern_all}?${doubleCluePattern_all}+$"
+
+  # Compose 3-clue patterns together, allowing for an optional additional
+  # 2-clue or 1-clue pattern since words may require 0, 1, or 2 clues mod 3.
+  pattern4="^${tripleCluePattern_all}+(${doubleCluePattern_all}|${singleCluePattern_all})?$"
+  pattern5="^(${doubleCluePattern_all}|${singleCluePattern_all})?${tripleCluePattern_all}+$"
 
   logDebug "singleLetterClues:     ${singleLetterClues}"
   logDebug "multiLetterClues:      ${multiLetterClues}"
   logDebug "singleCluePattern_all: ${singleCluePattern_all}"
   logDebug "doubleCluePattern_all: ${doubleCluePattern_all}"
-  logDebug "Regex file composed from pairs of adjacent clues:"
-  logDebug "\n$(cat ${regexFile})"
+  logDebug "Regex file composed from 2-clue paths:"
+  logDebug "\n$(cat ${twoCluePathRegexFile})"
+  logDebug "Regex file composed from 3-clue paths:"
+  logDebug "\n$(cat ${threeCluePathRegexFile})"
   logDebug "Third pass filtering applying the following patterns to words list file:"
-  logDebug " '${pattern2}'"
-  logDebug " '${pattern3}'"
+  logDebug "pattern2:\n  '${pattern2}'"
+  logDebug "pattern3:\n  '${pattern3}'"
+  logDebug "pattern4:\n  '${pattern4}'"
+  logDebug "pattern5:\n  '${pattern5}'"
 
   # Apply the new filter pattern
   # TODO: centralize the definition/declaration of all filtered word list files
   set +e
-  egrep "${pattern2}" "${filteredWordsFile}" | egrep "${pattern3}" > "${filteredWordsFile3}"
+  egrep "${pattern2}" "${filteredWordsFile}" | egrep "${pattern3}" | egrep "${pattern4}" | egrep "${pattern5}" > "${filteredWordsFile3}"
   if [ $? -eq 2 ]; then
     logError "There was an error with the grep command just run"
     exitCode=$((exitCode | GREP_ERROR))
