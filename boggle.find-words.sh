@@ -223,7 +223,7 @@ function setupOutputDir() {
 # Coloration
 # (not currently wrapped in a function)
 function setupColoring() {
-TPUT_RESET="$(tput sgr0)";
+TPUT_RESET="$(myTput sgr0)";
 
  FAINT="$(myTput dim)";
 BRIGHT="$(myTput bold)";
@@ -865,6 +865,7 @@ function checkWordAgainstGrid() {
 # Loop over words (lines) in words files
 function performFullPathSearchFiltering() {
   setupGridMap
+  touch "${filteredWordsFile4}"
   while read word; do
     checkWordAgainstGrid
   done < "${filteredWordsFile}"
