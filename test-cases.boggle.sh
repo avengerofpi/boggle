@@ -53,15 +53,22 @@ function setTestFile() {
   testFile="$(printf "${EXPECTED_WORDS_FILE_FORMAT_STR}" "${wordFileLabel}" "${gridFileLabel}")"
 }
 
+# Expect filtered word lists
+# Depends on: wordFileLabel gridFileLabel
+function setOutputFile() {
+  OUTPUT_FILE_FORMAT_STR="${outputDir}/%s.grid-%s.txt"
+  outputFile="$(printf "${OUTPUT_FILE_FORMAT_STR}" "${wordFileLabel}" "${gridFileLabel}")"
+  outputFiles+=("${outputFile}")
+}
+
 # TODO: maybe use colored logging here, too? try to not compete with color scheme for boggle script
 # Depends on: wordFileLabel gridFileLabel
 function runTestCase() {
   setGridFile
   setWordFile
   setTestFile
+  setOutputFile
 
-  outputFile="${outputDir}/${wordFileLabel}.${gridFileLabel}.txt"
-  outputFiles+=("${outputFile}")
   echo "Running TestCase with"
   echo "    Grid file: ${gridFile}"
   echo "    Word file: ${wordFile}"
