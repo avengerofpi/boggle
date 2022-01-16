@@ -27,6 +27,19 @@ function setupOutputDir() {
   echo "Output dir: ${outputDir}"
 }
 
+declare datetime
+function touchDatetime() {
+  datetime="$(date +"%F %R:%S")"
+}
+function logStart() {
+  touchDatetime
+  echo "Start: ${datetime}"
+}
+function logEnd() {
+  touchDatetime
+  echo "End:   ${datetime}"
+}
+
 # Grids files
 GRID_FILE_FORMAT_STR="${PWD}/data/grids/sample-boggle-grid.%s.txt"
 GRID_FILE_LABELS=({01..09})
@@ -56,7 +69,7 @@ function setTestFile() {
 # Expect filtered word lists
 # Depends on: wordFileLabel gridFileLabel
 function setOutputFile() {
-  OUTPUT_FILE_FORMAT_STR="${outputDir}/%s.grid-%s.txt"
+  OUTPUT_FILE_FORMAT_STR="${outputDir}/test-run.%s.grid-%s.log"
   outputFile="$(printf "${OUTPUT_FILE_FORMAT_STR}" "${wordFileLabel}" "${gridFileLabel}")"
   outputFiles+=("${outputFile}")
 }
@@ -75,7 +88,7 @@ function runTestCase() {
   echo "    Test file: ${testFile}"
   echo "  Output file: ${outputFile}"
 
-  colorFlag="--no-color"
+  colorFlag="--color"
   debugFlag="--no-debug"
   infoFlag="--info"
   warnFlag="--warn"
@@ -85,6 +98,8 @@ function runTestCase() {
 
   set +e
   nohup /usr/bin/time -pao "${outputFile}" ./boggle.find-words.sh -g "${gridFile}" -w "${wordFile}" -t "${testFile}" ${loggingFlags} > "${outputFile}" &
+  # Delay to help avoid race conditions on output dir selection in boggle script
+  sleep 1
   set -eu
   echo
 }
@@ -108,7 +123,8 @@ summarizeResults() {
     exit 2
   fi
 
-  echo "Waiting for all tests to pass..."
+  logStart
+  echo "Waiting for all tests to finish running..."
   declare -i totalDone=$((numPass + numFail))
   declare -i sleepSeconds=10
   while [ ${numFiles} -ne ${totalDone} ]; do
@@ -118,10 +134,17 @@ summarizeResults() {
     numFail=$(grep -l "${failPattern}" "${outputFiles[@]}" | wc -l)
     totalDone=$((numPass + numFail))
   done
+  logEnd
   echo
   printf "%2d test report files\n"  ${numFiles}
   printf "%2d tests passed\n"       ${numPass}
   printf "%2d tests failed\n"       ${numFail}
+  if [ ${numFail} -gt 0 ]; then
+    grep -l "${failPattern}" "${outputFiles[@]}" | sed -e 's@^@  @'
+  fi
+
+  echo
+  echo "Output dir: ${outputDir}"
 }
 
 declare wordFileLabel gridFileLabel
