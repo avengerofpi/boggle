@@ -204,7 +204,7 @@ function setupOutputDir() {
     putative_outputDir="$(printf "${outputDirFormatStr}" "${outputDirIndex}")"
     logDebug "Checking whether (putative) output dir '${putative_outputDir}' exists already"
     if [ ! -e "${putative_outputDir}" ]; then
-      logDebug "  Does not exist yet. We will use '${outputDir}' as the output dir"
+      logDebug "  Does not exist yet. We will use '${putative_outputDir}' as the output dir"
       outputDir="${putative_outputDir}"
       break;
     fi;
