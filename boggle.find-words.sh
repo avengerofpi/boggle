@@ -467,18 +467,12 @@ function createInitialFilteredWordsFile() {
 
 # Add a pattern to filter out hits with too many of any char (or multi-char)
 
-# First, get counts of each clue. Be careful to not filter too greedily, e.g. if
-# there's a multi-char clue 'in' that occurs once as well as single-char clues
-# 'i' and 'n', then it may be possible (depending on the actual grid) for 'in'
-# to occur more than once.
-function performClueCountsFiltering() {
-  # Count the frequency of each complete clue
-  declare -A clueCnts
-  # Count the frequency of each char (e.g., if "inn" is a clue, it increases
-  # the total for 'i' by one (1) and the total for 'n' by two (2)
+# Get counts of each char used over all clues and ensure no word exceeds the
+# max for each char. This includes filtering out words that contain any char
+# not included in any clue.
+function performCharCountsFiltering() {
   declare -A charCnts
   for c in {a..z}; do
-    clueCnts["${c}"]="0";
     charCnts["${c}"]="0";
   done
   # In order to udpate the arrays from within the while loop, use process
@@ -487,11 +481,6 @@ function performClueCountsFiltering() {
   #   "Every command in a pipeline receives a copy of the shell's execution
   #     environment, so a while loop would populate a copy of the array, and when
   #     the while loop completes, that copy disappears"
-  # clueCnts:
-  while read cnt clue; do
-    logDebug "Found clue '${clue}' (cnt: '${cnt}')"
-    clueCnts["${clue}"]="${cnt}"
-  done < <(sed -e 's@\(\<[a-z]\)@\n\1@g' -e 's@ @\n@g' "${GRID}" | grep '[a-z]' | sort | uniq -c)
   # charCnts:
   while read cnt char; do
     logDebug "Found clue '${char}' (cnt: '${cnt}')"
@@ -499,44 +488,15 @@ function performClueCountsFiltering() {
   done < <(sed -e 's@\(.\)@\n\1@g' "${GRID}" | grep '[a-z]' | sort | uniq -c)
 
   logDebug
-  logDebug "clues:  '${!clueCnts[@]}'"
-  logDebug "counts: '${clueCnts[@]}'"
-  logDebug
   logDebug "chars:  '${!charCnts[@]}'"
   logDebug "counts: '${charCnts[@]}'"
 
   # Now process each clue.
-  for clue in "${!clueCnts[@]}"; do
-    logDebug "Checking for too many hits against clue '${clue}'"
-    # If clue is multi-char, check the individual chars cnts in case they all
-    # occur individually Note that if I were to properly handle arbitrary
-    # length or number of multi-char clues, I'd need to check all possible ways
-    # to build each multi-char clue from others
-    declare -i clueLen="${#clue}"
-    declare -i maxHits=0
-    if [ "${clueLen}" -eq 1 ]; then
-      logDebug "  This is a single-char clue, it has '${clueLen}' chars"
-      declare char="${clue}"
-      maxHits=${charCnts[${char}]}
-      logDebug "  This char occurs '${maxHits}' times amongst all clues in the grid"
-    else
-      declare -i maxExtraHits=0
-      declare -i clueCnt="${clueCnts[${clue}]}"
-      logDebug "  This is a multi-char clue, it has '${clueLen}' chars"
-      for i in $(seq 0 $((clueLen - 1))); do
-        c="${clue:${i}:1}"
-        declare -i cCnt="${clueCnts[${c}]}"
-        logDebug "  Inspecting embedded char '${c}' (cnt: '${cCnt}')"
-        if [ ${cCnt} -lt ${maxExtraHits} -o ${maxExtraHits} -eq 0 ]; then
-          maxExtraHits=${cCnt}
-          logDebug "    Updating maxExtraHits to '${maxExtraHits}'"
-        fi
-      done
-      maxHits=${clueCnt}+${maxExtraHits}
-      logDebug "  maxHits for this multi-char clue: '${maxHits}'"
-    fi
+  for char in "${!charCnts[@]}"; do
+    logDebug "Checking for too many hits against char '${char}'"
+    declare -i maxHits="${charCnts["${char}"]}"
     declare -i excessiveHits=${maxHits}+1
-    checkPattern="^\(.*${clue}\)\{${excessiveHits},\}"
+    checkPattern="^\(.*${char}\)\{${excessiveHits},\}"
     logDebug "checkPattern: '${checkPattern}'"
     sed -i -e "/${checkPattern}/d" "${filteredWordsFile}"
   done
@@ -936,7 +896,7 @@ function main() {
   promptUserForGridAndWordFiles
   validateFiles
   createInitialFilteredWordsFile
-  performClueCountsFiltering
+  performCharCountsFiltering
   performAdjacentCluesFiltering
   performFullPathSearchFiltering
   logCompletion
