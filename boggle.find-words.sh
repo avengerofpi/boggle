@@ -221,7 +221,7 @@ function setupOutputDir() {
 }
 
 # Coloration
-# (not currently wrapped in a function)
+# TODO: maybe make coloration a sourcable file, for both/all scripts
 function setupColoring() {
 TPUT_RESET="$(myTput sgr0)";
 
@@ -779,6 +779,7 @@ function extendPaths() {
         break 2
       fi
       if [ ${pathLen} -le $((len-N)) ]; then
+        logDebug "  Attempting to extend word by '${N}' chars"
         extendSinglePathByCluesOfLengthN
       else
         logDebug "  There are not enough chars left in word '${word}' after '${prefix}' to extend '${N}' chars"
