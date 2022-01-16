@@ -61,6 +61,7 @@ kines
 kinin
 kino
 kins
+kith
 knot
 koine
 koines
@@ -93,6 +94,7 @@ sien
 sienna
 sine
 sink
+sith
 snig
 snot
 snye
@@ -103,10 +105,15 @@ tain
 tains
 taint
 tais
+thig
+thin
 thine
 think
 thins
+thio
 thionin
+this
+thyine
 toise
 tone
 tones

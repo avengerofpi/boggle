@@ -580,14 +580,16 @@ function performAdjacentCluesFiltering() {
   # occurs in the grid (might also handle the 'no double-char clue' case), which is standard in real boggle. If we
   # generalize to clue lengths > 2 chars or to multiple double-char clues, this logic will need changing.
   singleLetterClues=$(sed -e 's@\<[a-z]\{2,\}\>@@g' -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @@g')
-  singleCluePattern_1char="([${singleLetterClues}])"
+  multiLetterClues=$( sed -e 's@\<[a-z]\>@@g'       -e 's@ @\n@g' "${GRID}" | sort -u | xargs | sed -e 's@ @|@g')
+  singleCluePattern_all="([${singleLetterClues}]|${multiLetterClues})"
   doubleCluePattern_all="($(sort "${regexFile}" |  xargs | sed -e 's@ @|@g'))"
-  pattern2="^${doubleCluePattern_all}+${singleCluePattern_1char}?$"
-  pattern3="^${singleCluePattern_1char}?${doubleCluePattern_all}+$"
+  pattern2="^${doubleCluePattern_all}+${singleCluePattern_all}?$"
+  pattern3="^${singleCluePattern_all}?${doubleCluePattern_all}+$"
 
-  logDebug "singleLetterClues:         ${singleLetterClues}"
-  logDebug "singleCluePattern_1char: ${singleCluePattern_1char}"
-  logDebug "doubleCluePattern_all:   ${doubleCluePattern_all}"
+  logDebug "singleLetterClues:     ${singleLetterClues}"
+  logDebug "multiLetterClues:      ${multiLetterClues}"
+  logDebug "singleCluePattern_all: ${singleCluePattern_all}"
+  logDebug "doubleCluePattern_all: ${doubleCluePattern_all}"
   logDebug "Regex file composed from pairs of adjacent clues:"
   logDebug "\n$(cat ${regexFile})"
   logDebug "Third pass filtering applying the following patterns to words list file:"

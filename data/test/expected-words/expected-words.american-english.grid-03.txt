@@ -42,8 +42,13 @@ pine
 pint
 pram
 prut
+quad
 quads
+quaint
+quaoar
+quasar
 quest
+quests
 rapid
 rapids
 rapine

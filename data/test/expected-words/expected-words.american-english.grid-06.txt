@@ -19,6 +19,7 @@ ionian
 ions
 iota
 kinsey
+kith
 knot
 nikon
 nina
@@ -40,9 +41,11 @@ sink
 snot
 taine
 taint
+thin
 thine
 think
 thins
+this
 tone
 tones
 toni
