@@ -954,12 +954,10 @@ declare -i pos=0
 # grid that spells out the 'prefix' or length 'pathLen' for the current word
 # e.g., '112122 4 inni'
 declare -a pathObjects=()
-declare -a wordSuccessfulPaths=()
 function initCheckWordVars() {
   len=${#word}
   pos=0
   pathObjects=()
-  wordSuccessfulPaths=()
 }
 
 # TODO: generalize for arbitrary-length clues
@@ -1041,6 +1039,8 @@ function extendSinglePathByCluesOfLengthN() {
         if [ "${diffJ}" -ge -1 -a "${diffJ}" -le 1 ]; then
           # If all checks passed, append the extended path to newPathObjects array
           newPathFound=true
+          # Keep track that we already know this prefix/word has a valid path.
+          previouslySeenStrings["${newPrefix}"]="found"
           declare newPath="${path}${nextPosition}"
           # TODO: check, should this be "+1" or "+N" ???
           declare -i newPathLen=$((pathLen+N))
@@ -1048,8 +1048,6 @@ function extendSinglePathByCluesOfLengthN() {
           logDebug "        SUCCESS - path extension FOUND: '${pathObj}' -> '${newPathObject}'"
           if [ ${newPathLen} -eq ${#word} ]; then
             logDebug "          This path completes the target word"
-            logDebug "            Appending '${newPathObject}' to wordSuccessfulPaths"
-            wordSuccessfulPaths+=("${newPathObject}")
             # For now, stop at the first successful path rather than trying to find all paths
             # TODO: For this final relatively compute-intensive step,
             #       try seeing we can do a depth-first constructive search
@@ -1084,7 +1082,7 @@ function extendPaths() {
     pos=${pathLen}
     logDebug "Inspecting partial path '${path}' of length '${pos}' (${prefix}) for word '${word}'"
     for N in {1..2}; do
-      if [ ${#wordSuccessfulPaths[@]} -gt 0 ]; then
+      if [ -n "${previouslySeenStrings["${word}"]:-}" ]; then
         logDebug "  A path for word '${word}' has been found. Stopping search"
         newPathObjects=()
         break 2
@@ -1123,26 +1121,41 @@ function checkWordAgainstGrid() {
   while [ ${#pathObjects[@]} -gt 0 ]; do
     extendPaths
   done
-  declare -i numWordSuccessfulPaths=${#wordSuccessfulPaths[@]};
-  if [ ${numWordSuccessfulPaths} -gt 0 ]; then
-    logDebug "SUCCESS - found ${numWordSuccessfulPaths} valid paths for '${word}'"
+  checkIfPathHasBeenFoundForCurrentWord
+}
+
+function addWordToFinalList() {
+  echo "${word}" >> "${filteredWordsFile4}"
+}
+
+function checkIfPathHasBeenFoundForCurrentWord() {
+  logDebug "Checking whether a path has been found for '${word}'"
+
+  if [ -n "${previouslySeenStrings["${word}"]:-}" ]; then
+    logDebug "SUCCESS - found a path for '${word}'"
     logDebug "${word}"
-    echo "${word}" >> "${filteredWordsFile4}"
+    addWordToFinalList
   else
-    logDebug "FAILURE - no paths found for word '${word}'"
+    logDebug "FAILURE - no paths found for '${word}'"
   fi
-  logDebug
 }
 
 # Loop over words (lines) in words files
+declare -A previouslySeenStrings
 function performFullPathSearchFiltering() {
   setupGridMap
   touch "${filteredWordsFile4}"
   while read word; do
-    checkWordAgainstGrid
-  done < "${filteredWordsFile}"
+    if [ -n "${previouslySeenStrings["${word}"]:-}" ]; then
+      logDebug "Checking word '${word}'"
+      logDebug "  '${word}' has been seen before - bypassing logic to search for paths"
+      checkIfPathHasBeenFoundForCurrentWord
+    else
+      checkWordAgainstGrid
+    fi
+  done < <(tac "${filteredWordsFile}")
   # TODO: maintain iterative sequence of these filtered word lists better
-  cp "${filteredWordsFile4}" "${filteredWordsFile}"
+  sort "${filteredWordsFile4}" > "${filteredWordsFile}"
 }
 
 # Score a words file
