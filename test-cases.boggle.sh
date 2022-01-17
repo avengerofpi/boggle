@@ -31,11 +31,11 @@ declare datetime
 function touchDatetime() {
   datetime="$(date +"%F %R:%S")"
 }
-function logStart() {
+function logStartTime() {
   touchDatetime
   echo "Start: ${datetime}"
 }
-function logEnd() {
+function logEndTime() {
   touchDatetime
   echo "End:   ${datetime}"
 }
@@ -123,7 +123,7 @@ summarizeResults() {
     exit 2
   fi
 
-  logStart
+  logStartTime
   echo "Waiting for all tests to finish running..."
   declare -i totalDone=$((numPass + numFail))
   declare -i sleepSeconds=10
@@ -134,7 +134,7 @@ summarizeResults() {
     numFail=$(grep -l "${failPattern}" "${outputFiles[@]}" | wc -l)
     totalDone=$((numPass + numFail))
   done
-  logEnd
+  logEndTime
   echo
   printf "%2d test report files\n"  ${numFiles}
   printf "%2d tests passed\n"       ${numPass}
