@@ -77,16 +77,12 @@ dimes
 dims
 disme
 doms
-dorad
-dorads
-doric
 dors
 dorse
 dorser
 dorsers
 dorses
 drac
-draco
 drad
 drat
 dress
@@ -94,7 +90,6 @@ drow
 eard
 eards
 ears
-fedora
 feds
 feis
 fems

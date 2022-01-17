@@ -1,6 +1,4 @@
 adit
-aida
-aidas
 aids
 aine
 amus
@@ -95,7 +93,6 @@ prat
 prats
 prau
 praus
-pruta
 psoae
 psoas
 quad
@@ -155,13 +152,11 @@ stap
 star
 starn
 starnie
-starr
 stoa
 stoae
 stoas
 stum
 sura
-surat
 taos
 taps
 tarn
@@ -226,8 +221,6 @@ wrap
 wraps
 wrast
 wrasts
-zaida
-zaidas
 zine
 zips
 zite

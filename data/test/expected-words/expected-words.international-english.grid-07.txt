@@ -35,7 +35,6 @@ dees
 dene
 denes
 deni
-denis
 dens
 dense
 denseness
@@ -78,8 +77,6 @@ esnes
 esse
 esses
 fard
-farden
-fardens
 fare
 fared
 faro
@@ -98,7 +95,6 @@ freon
 freons
 froe
 frond
-fronded
 fronds
 frons
 nebs
@@ -165,7 +161,6 @@ sends
 sene
 senes
 senor
-senora
 sens
 sense
 sensed

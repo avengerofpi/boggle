@@ -7,7 +7,6 @@ amid
 amido
 amin
 amino
-aminos
 amnio
 amnion
 anion
@@ -40,7 +39,6 @@ dita
 ditz
 ditzes
 diva
-divan
 divi
 divo
 docs
@@ -67,19 +65,12 @@ maid
 main
 mand
 mandi
-mani
-manito
-manitos
-manitu
-mannose
 mavin
 mina
 mince
 minces
 mind
 mino
-minos
-minotaur
 mint
 naes
 nain
@@ -94,7 +85,6 @@ niton
 nodi
 noes
 nose
-nosean
 nota
 notion
 nova
@@ -121,7 +111,6 @@ rutin
 scontion
 scot
 scotia
-sean
 sear
 seare
 seat
@@ -138,7 +127,6 @@ tare
 tarn
 taro
 tian
-tina
 tind
 tocs
 toea
@@ -152,7 +140,6 @@ turn
 tzar
 urao
 urea
-urena
 vain
 viand
 vina

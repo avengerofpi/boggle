@@ -3,7 +3,6 @@ ager
 anew
 angel
 anger
-angered
 area
 areas
 ared
@@ -12,8 +11,6 @@ aret
 arew
 aside
 auas
-bede
-bedew
 bedide
 bedrid
 bedu
@@ -62,7 +59,6 @@ edged
 edger
 edible
 edile
-eerie
 eger
 eide
 eider
@@ -72,14 +68,12 @@ gaed
 gare
 gart
 gaud
-gaudier
 gauds
 gaus
 gauss
 gear
 geed
 gelid
-gere
 gert
 greasier
 grew
@@ -87,8 +81,6 @@ grewed
 grid
 gride
 grids
-gris
-iberis
 idea
 ideas
 ired
@@ -141,7 +133,6 @@ weir
 weird
 weirded
 weirds
-weired
 were
 wert
 wide

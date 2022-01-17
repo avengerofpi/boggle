@@ -1,4 +1,3 @@
-adnate
 aeon
 agas
 agast
@@ -79,8 +78,6 @@ gast
 gath
 gean
 geat
-gena
-genas
 genoa
 genoas
 gens
@@ -133,7 +130,6 @@ negs
 neon
 nest
 nets
-noah
 node
 nogs
 nota

@@ -13,7 +13,6 @@ caters
 code
 codes
 cods
-cora
 cord
 cords
 corset
@@ -25,25 +24,17 @@ crates
 crow
 crowd
 crowds
-dario
 date
 dates
 dear
 dears
-deidre
 deism
-diem
 dies
 dime
 dimes
 dims
-dora
-doric
-dorset
-draco
 dress
 ears
-fedora
 feds
 foci
 fora
@@ -55,7 +46,6 @@ heed
 heeds
 hems
 hews
-iowa
 irate
 mess
 misread
@@ -78,7 +68,6 @@ rates
 read
 reads
 reds
-rico
 rode
 rods
 sear
@@ -93,7 +82,6 @@ taro
 tars
 tear
 tears
-tess
 word
 words
 worse
