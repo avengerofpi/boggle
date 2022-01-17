@@ -174,7 +174,6 @@ semis
 sers
 seta
 shed
-shes
 taco
 tads
 taed

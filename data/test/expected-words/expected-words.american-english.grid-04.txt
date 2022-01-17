@@ -75,7 +75,6 @@ seat
 semi
 semis
 shed
-shes
 taco
 tads
 taro

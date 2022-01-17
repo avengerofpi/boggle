@@ -64,7 +64,6 @@ naos
 naoses
 nerd
 nerds
-nerts
 noes
 noeses
 nose
