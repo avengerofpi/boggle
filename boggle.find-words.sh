@@ -952,7 +952,7 @@ declare -i pos=0
 # pathObject values are space-delimited strings containing 'path pathLen prefix'
 # where 'path' is a sequence of sequentially adjacent coordinates on the
 # grid that spells out the 'prefix' or length 'pathLen' for the current word
-# e.g., '112122 3 inni'
+# e.g., '112122 4 inni'
 declare -a pathObjects=()
 declare -a wordSuccessfulPaths=()
 function initCheckWordVars() {
@@ -1037,7 +1037,7 @@ function extendSinglePathByCluesOfLengthN() {
           newPathFound=true
           declare newPath="${path}${nextPosition}"
           # TODO: check, should this be "+1" or "+N" ???
-          declare -i newPathLen=$((pathLen+1))
+          declare -i newPathLen=$((pathLen+N))
           newPathObject="${newPath} ${newPathLen} ${newPrefix}"
           logDebug "        SUCCESS - path extension FOUND: '${pathObj}' -> '${newPathObject}'"
           if [ ${newPathLen} -eq ${#word} ]; then
