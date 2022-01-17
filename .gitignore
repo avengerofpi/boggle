@@ -4,3 +4,4 @@ tmp/
 data/grids/random/
 output/
 data/test/results/
+session.vim
