@@ -1200,13 +1200,13 @@ function performTestingCheck() {
     logTesting "Performing testing check"
     logTesting "  Checking file: '${filteredWordsFile}'"
     logTesting "  against  file: ${EXPECTED_TEST_FILE}"
-    declare -i diffLen="$(diff "${EXPECTED_TEST_FILE}" "${filteredWordsFile}" | wc -l)"
-    declare   fullDiff="$(diff "${EXPECTED_TEST_FILE}" "${filteredWordsFile}")"
+    declare fullDiff="$(diff "${EXPECTED_TEST_FILE}" "${filteredWordsFile}" | grep '^[<>]')"
+    declare -i diffLen="$(echo "${fullDiff}" | wc -l)"
     logTesting "Diff between files has '${diffLen}' lines"
-    if [ ${diffLen} -eq 0 ]; then
+    if [ -z "${fullDiff}" ]; then
       logTesting "  Test SUCCESS"
     else
-      logError "  Test FAILURE - the files did not match"
+      logError "  Test FAILURE - the files did not match (${diffLen} lines different)"
       logError "diff \"${EXPECTED_TEST_FILE}\" \"${filteredWordsFile}\""
       logError "\n${fullDiff}"
     fi
