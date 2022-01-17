@@ -3,6 +3,10 @@
 # Exit on errors. Undefined vars count as errors.
 set -eu
 
+# TODO: Some of the slowness might be b/c I have a log of logging of strings
+# that get expanded regardless of whether their respective log level is turned
+# on, and some of these strings are long.
+
 # Default ogging levels
    debug=false;
     info=true;
@@ -371,7 +375,6 @@ declare -i INVALID_GRID_FILE=4
 declare -i GREP_ERROR=8
 declare -i TESTING_SETUP_ERROR=16
 declare -i TESTING_FAILED_ERROR=32
-
 
 # Exit if exitCode has been set, log and exit if so
 # TODO: improve exitCode values...there's more of them now and I'm not being
@@ -1088,7 +1091,7 @@ function extendPaths() {
         break 2
       fi
       if [ ${pathLen} -le $((len-N)) ]; then
-        logDebug "  Attempting to extend word by '${N}' chars"
+        logDebug "Attempting to extend word by '${N}' chars"
         extendSinglePathByCluesOfLengthN
       else
         logDebug "  There are not enough chars left in word '${word}' after '${prefix}' to extend '${N}' chars"
