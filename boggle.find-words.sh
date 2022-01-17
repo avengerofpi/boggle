@@ -1013,13 +1013,19 @@ function extendSinglePathByCluesOfLengthN() {
       newPathFound=false
       local usedPositions="$(echo ${path} | sed -e 's@\(..\)@\1 @g' | sed -e 's@ $@@' )"
       # Check it hasn't been used already in the current path
+      previouslySeenPosition=false
       for usedPosition in ${usedPositions}; do
         logDebug "  Checking against used position ${usedPosition}"
         if [[ "${nextPosition}" == "${usedPosition}" ]]; then
           logDebug "  Invalid - position has already been used"
-          break 2
+          previouslySeenPosition=true
+          break
         fi
       done
+      if ${previouslySeenPosition}; then
+        # Go to next nextPosition
+        continue
+      fi
       logDebug "    Valid - Position has not been used yet"
       # Check that it validly extends the current path
       logDebug "    Now check that it can extend the current path"
