@@ -1,5 +1,9 @@
 aids
 apse
+apses
+aqua
+aquae
+aquas
 auto
 autos
 diet
@@ -15,6 +19,7 @@ mast
 masts
 mats
 must
+musts
 newt
 nips
 nite
@@ -25,6 +30,7 @@ pads
 parr
 pars
 parse
+parses
 past
 pasta
 pastas
@@ -46,6 +52,7 @@ raps
 rasp
 rats
 rust
+rusts
 ruts
 sapient
 saps
@@ -66,7 +73,10 @@ spite
 spitz
 sprat
 sprats
+squad
+squads
 star
+stars
 taps
 tarp
 tarps
@@ -81,6 +91,7 @@ toad
 toads
 toes
 tsar
+tsars
 turn
 turnip
 turnips

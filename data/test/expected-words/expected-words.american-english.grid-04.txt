@@ -1,4 +1,5 @@
 airs
+aria
 cadet
 cadre
 cadres
@@ -29,12 +30,19 @@ dates
 dear
 dears
 deism
+died
 dies
 dime
 dimes
 dims
+diss
+dissed
+dread
+dreads
 dress
+dressed
 ears
+fedora
 feds
 foci
 fora
@@ -48,7 +56,11 @@ hems
 hews
 irate
 mess
+messed
 misread
+misreads
+miss
+missed
 mode
 modem
 modems
@@ -67,7 +79,11 @@ rated
 rates
 read
 reads
+rear
+rears
 reds
+retard
+retards
 rode
 rods
 sear
@@ -81,6 +97,7 @@ taro
 tars
 tear
 tears
+terse
 word
 words
 worse

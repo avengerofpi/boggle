@@ -1,11 +1,16 @@
+adage
 aeon
 aged
 agent
 agents
 ages
+ahead
+andante
+andantes
 ante
 antes
 ants
+ashen
 atone
 atoned
 date
@@ -15,6 +20,7 @@ degas
 dent
 dogs
 done
+donne
 dotage
 doth
 east
@@ -26,6 +32,7 @@ fogs
 fogy
 font
 gage
+gaged
 gages
 gags
 genoa
@@ -58,11 +65,14 @@ sago
 sane
 seat
 sent
+shea
 snag
 tags
+taste
 teas
 teat
 tens
+toast
 today
 toed
 toga
@@ -71,3 +81,4 @@ togas
 togs
 tone
 toned
+tonne

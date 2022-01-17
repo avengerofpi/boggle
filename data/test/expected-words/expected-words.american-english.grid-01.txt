@@ -12,8 +12,10 @@ cozen
 dino
 dint
 diva
+divan
 docs
 does
+donna
 dose
 doze
 dozen
@@ -27,6 +29,7 @@ mince
 minces
 mind
 mint
+nation
 nature
 near
 neat
@@ -36,6 +39,7 @@ notion
 nova
 once
 onion
+oration
 ratio
 ration
 raze
