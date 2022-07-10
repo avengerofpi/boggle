@@ -3,7 +3,7 @@
 # Exit on errors. Undefined vars count as errors.
 set -eu
 
-# TODO: Some of the slowness might be b/c I have a log of logging of strings
+# TODO: Some of the slowness might be b/c I have a lot of logging of strings
 # that get expanded regardless of whether their respective log level is turned
 # on, and some of these strings are long.
 
@@ -160,7 +160,6 @@ function validateParsedArgs() {
   # If testing option was set, ensure files were also set
   logDebug "Validating parsed args"
   if ${testing}; then
-  logDebug "Validating parsed args"
     logDebug "  testing option was set."
     if ${randomFiles}; then
       logError "Validating parsed args"
