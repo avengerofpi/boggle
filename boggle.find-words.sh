@@ -1196,7 +1196,7 @@ function scoreWordsFile() {
   done
   scoreString="$(printf "%4d points total" "${score}")"
   logInfo
-  logInfo "  ${scoreString} $(basename "${filteredWordsFile}")"
+  logInfo "  ${scoreString} "${filteredWordsFile}""
   logScore "  ${scoreString}"
 }
 
