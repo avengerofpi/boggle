@@ -449,17 +449,21 @@ function logFilteredHitCount() {
 
 # Create writable copy of selected words file.
 # We will filter on this copy rather than on the original.
+declare extension="txt"
 declare filteredWordsFile=""
 declare filteredWordsFile2=""
 declare filteredWordsFile3=""
 declare filteredWordsFile4=""
+declare filteredWordsFileSortedByLength=""
 function createInitialFilteredWordsFile() {
   gridBasename="$(basename "${GRID}")"
   wordsBasename="$(basename "${WORDS}")"
-  filteredWordsFile="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered.txt"
-  filteredWordsFile2="${filteredWordsFile}2"
-  filteredWordsFile3="${filteredWordsFile}3"
-  filteredWordsFile4="${filteredWordsFile}4"
+  filteredWordsFilePrefix="${outputDir}/words.${gridBasename}---${wordsBasename}---filtered"
+  filteredWordsFile="${filteredWordsFilePrefix}.${extension}"
+  filteredWordsFile2="${filteredWordsFilePrefix}.2.${extension}"
+  filteredWordsFile3="${filteredWordsFilePrefix}.3.${extension}"
+  filteredWordsFile4="${filteredWordsFilePrefix}.4.${extension}"
+  filteredWordsFileSortedByLength="${filteredWordsFilePrefix}.sorted-by-length.${extension}"
   filteredWordsFileOrig="${filteredWordsFile}.orig"
   logInfo "Saving filtered words to file: ${filteredWordsFile}"
   cp "${WORDS}" "${outputDir}"
@@ -1161,6 +1165,13 @@ function performFullPathSearchFiltering() {
   sort "${filteredWordsFile4}" > "${filteredWordsFile}"
 }
 
+# Create copy of filtered word file, but where the words are sorted by length first
+function createFileSortedByLength() {
+  for w in $(cat "${filteredWordsFile}"); do
+    echo "${#w} ${w}";
+  done | sort -n 1> "${filteredWordsFileSortedByLength}"
+}
+
 # Score a words file
 declare -i score=0
 function scoreWordsFile() {
@@ -1228,6 +1239,7 @@ function main() {
   performCharCountsFiltering
   performAdjacentCluesFiltering
   performFullPathSearchFiltering
+  createFileSortedByLength
   logCompletion
   scoreWordsFile "${filteredWordsFile}"
   performTestingCheck
